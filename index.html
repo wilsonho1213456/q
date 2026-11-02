@@ -29,7 +29,7 @@
             font-family: 'Oswald', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
         }
         
-        #map { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; }
+        #map { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
 
         /* 頂部 HUD 看板 */
         .nav-banner {
@@ -39,12 +39,12 @@
             transform: translateX(-50%);
             width: calc(100% - 32px);
             max-width: 480px;
-            background: rgba(10, 14, 18, 0.95);
+            background: rgba(10, 14, 18, 0.96);
             border-left: 6px solid #b026ff;
             border-radius: 6px;
             padding: 12px 18px;
             color: #ffffff;
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.9);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.95);
             z-index: 20;
             display: flex;
             flex-direction: column;
@@ -63,7 +63,6 @@
             box-shadow: 0 0 25px rgba(245, 158, 11, 0.8) !important;
         }
 
-        /* 龍門架 / 幹線綠底牌 */
         .highway-sign-box { display: none; margin-bottom: 2px; }
         .highway-sign {
             display: inline-block;
@@ -81,7 +80,6 @@
         .nav-turn-icon { font-size: 32px; line-height: 1; color: #b026ff; min-width: 36px; text-align: center; }
         .nav-text-group { flex-grow: 1; }
 
-        /* ETA 與里程列 */
         .nav-eta-row {
             display: flex;
             align-items: baseline;
@@ -101,7 +99,6 @@
 
         .nav-road { font-size: 14px; font-weight: 500; color: #cbd5e1; text-transform: uppercase; margin-top: 2px; }
 
-        /* 車道指引小方格 (Lane Guidance) */
         .lane-container {
             display: none;
             gap: 6px;
@@ -134,78 +131,48 @@
         }
         .speed-badge { font-size: 15px; font-weight: 700; color: #ffffff; }
 
-        /* ---------------- 左側「垂直直排」Filter 欄 ---------------- */
-        .filter-bar {
+        /* ---------------- 正下方搜尋框容器 ---------------- */
+        #search-container {
             position: absolute;
-            top: calc(125px + env(safe-area-inset-top));
-            left: calc(16px + env(safe-area-inset-left));
-            display: flex;
-            flex-direction: column; /* 垂直直排 */
-            gap: 7px;
-            z-index: 25;
-            max-height: calc(100vh - 240px);
-            overflow-y: auto;
-            scrollbar-width: none;
-        }
-        .filter-bar::-webkit-scrollbar { display: none; }
-
-        .filter-chip {
-            background: rgba(10, 14, 18, 0.92);
-            color: #94a3b8;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 6px;
-            padding: 7px 11px;
-            font-size: 12px;
-            font-weight: 700;
-            white-space: nowrap;
-            cursor: pointer;
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            transition: all 0.2s ease;
-            text-align: left;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.7);
-        }
-        .filter-chip.active {
-            background: rgba(176, 38, 255, 0.3);
-            border-color: #b026ff;
-            color: #ffffff;
-            box-shadow: 0 0 10px rgba(176, 38, 255, 0.5);
+            bottom: calc(68px + env(safe-area-inset-bottom));
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 32px);
+            max-width: 440px;
+            z-index: 100;
         }
 
-        /* ---------------- 搜尋框樣式與高層級下拉選單 ---------------- */
         .mapboxgl-ctrl-geocoder {
-            position: absolute;
-            top: calc(125px + env(safe-area-inset-top));
-            right: calc(16px + env(safe-area-inset-right));
-            width: 250px !important;
-            max-width: calc(100vw - 120px) !important;
+            width: 100% !important;
+            max-width: 100% !important;
             background-color: rgba(10, 14, 18, 0.96) !important;
             border: 1.5px solid #334155 !important;
             border-radius: 6px !important;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.8) !important;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.95) !important;
             font-family: 'Oswald', sans-serif !important;
-            z-index: 9999 !important;
         }
-        .mapboxgl-ctrl-geocoder:focus-within {
-            border-color: #b026ff !important;
-            box-shadow: 0 0 12px rgba(176, 38, 255, 0.4) !important;
+        .mapboxgl-ctrl-geocoder input {
+            color: #ffffff !important;
+            font-size: 13px !important;
+            padding-left: 36px !important;
         }
-        .mapboxgl-ctrl-geocoder input { color: #ffffff !important; font-size: 13px !important; padding-left: 36px !important; }
         .mapboxgl-ctrl-geocoder input::placeholder { color: #64748b !important; }
         .mapboxgl-ctrl-geocoder .mapboxgl-ctrl-geocoder--icon { fill: #b026ff !important; top: 10px !important; }
 
+        /* 向上展開候選選單 */
         .mapboxgl-ctrl-geocoder .suggestions {
             position: absolute !important;
-            top: 100% !important;
+            bottom: calc(100% + 6px) !important;
+            top: auto !important;
             left: 0 !important;
             right: 0 !important;
-            z-index: 10000 !important;
+            z-index: 99999 !important;
             background-color: #0c1016 !important;
             border: 1.5px solid #a855f7 !important;
             border-radius: 6px !important;
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.95) !important;
+            box-shadow: 0 -12px 30px rgba(0, 0, 0, 0.98) !important;
             list-style: none !important;
-            margin: 4px 0 0 0 !important;
+            margin: 0 !important;
             padding: 0 !important;
             max-height: 240px !important;
             overflow-y: auto !important;
@@ -223,17 +190,17 @@
         }
         .mapboxgl-ctrl-geocoder .suggestions > .active,
         .mapboxgl-ctrl-geocoder .suggestions > li:hover {
-            background-color: rgba(168, 85, 247, 0.25) !important;
+            background-color: rgba(168, 85, 247, 0.3) !important;
         }
 
         /* 左下比例尺 */
         .gta-ruler {
             position: absolute;
-            bottom: calc(25px + env(safe-area-inset-bottom));
-            left: calc(20px + env(safe-area-inset-left));
+            bottom: calc(20px + env(safe-area-inset-bottom));
+            left: calc(16px + env(safe-area-inset-left));
             border-left: 2px solid #ffffff;
             border-bottom: 2px solid #ffffff;
-            width: 90px; height: 10px; color: #ffffff;
+            width: 80px; height: 10px; color: #ffffff;
             font-size: 11px; font-weight: 700; padding-left: 5px;
             line-height: 1; z-index: 15; pointer-events: none; letter-spacing: 1px;
         }
@@ -241,7 +208,7 @@
         /* 底部控制鈕 */
         .controls-group {
             position: absolute;
-            bottom: calc(20px + env(safe-area-inset-bottom));
+            bottom: calc(16px + env(safe-area-inset-bottom));
             right: calc(16px + env(safe-area-inset-right));
             display: flex; gap: 8px; z-index: 25;
         }
@@ -256,7 +223,7 @@
             box-shadow: 0 0 12px rgba(176, 38, 255, 0.6);
         }
 
-        /* GTA 玩家標記 (白色立體箭頭) */
+        /* GTA 玩家箭頭 */
         .gta-player-marker {
             width: 32px; height: 32px;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpolygon points='16,2 30,30 16,23 2,30' fill='%23ffffff' stroke='%23000000' stroke-width='3' stroke-linejoin='miter'/%3E%3C/svg%3E");
@@ -265,14 +232,14 @@
             transform-origin: center center; transition: transform 0.15s linear;
         }
 
-        /* 目的地信標 (GTA 綠色座駕目標) */
+        /* 目的地信標 */
         .gta-dest-marker {
             width: 22px; height: 22px;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' fill='%2322c55e' stroke='%23ffffff' stroke-width='2'/%3E%3Cpath d='M6 14 L8 9 L16 9 L18 14 Z' fill='%23ffffff'/%3E%3Ccircle cx='8' cy='15' r='1.5' fill='%23000'/%3E%3Ccircle cx='16' cy='15' r='1.5' fill='%23000'/%3E%3C/svg%3E");
             background-size: contain; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.9));
         }
 
-        /* GTA 純白剪影 Blip */
+        /* 純白剪影 Blip */
         .gta-v-blip {
             width: 22px; height: 22px; cursor: pointer;
             filter: drop-shadow(1px 1px 0px #000) drop-shadow(-1px -1px 0px #000) drop-shadow(1px -1px 0px #000) drop-shadow(-1px 1px 0px #000);
@@ -301,7 +268,6 @@
             </div>
         </div>
 
-        <!-- 車道小方格指引 (Lane Guidance) -->
         <div class="lane-container" id="lane-container"></div>
 
         <div class="status-row">
@@ -310,19 +276,12 @@
         </div>
     </div>
 
-    <!-- 左側「垂直直排」Filter 欄 -->
-    <div class="filter-bar" id="filter-bar">
-        <button class="filter-chip active" onclick="toggleFilter('all', this)">全部</button>
-        <button class="filter-chip" onclick="toggleFilter('camera', this)">📷 相機</button>
-        <button class="filter-chip" onclick="toggleFilter('laser', this)">🚨 激光槍</button>
-        <button class="filter-chip" onclick="toggleFilter('tunnel', this)">🚇 隧道</button>
-        <button class="filter-chip" onclick="toggleFilter('slope', this)">⚠️ 斜坡</button>
-        <button class="filter-chip" onclick="toggleFilter('facility', this)">🔧 設施</button>
-    </div>
+    <!-- 正下方搜尋框容器 -->
+    <div id="search-container"></div>
 
     <div class="gta-ruler">3305 FT</div>
 
-    <!-- 底部控制按鈕組 (含語音狀態切換) -->
+    <!-- 底部控制按鈕組 -->
     <div class="controls-group">
         <button class="action-btn active" id="voice-btn" onclick="toggleVoice()">🔊 語音</button>
         <button class="action-btn" id="lock-btn" onclick="toggleHeadingLock()">LOCK CAM</button>
@@ -342,7 +301,6 @@
         let activeMarkers = [];
         let currentDurationSec = 0;
 
-        // 語音導航控制變數
         let isVoiceEnabled = true;
         let isAudioUnlocked = false;
         let lastSpokenInstruction = '';
@@ -378,7 +336,6 @@
             bearing: 0
         });
 
-        // 搜尋框：放寬中英混合匹配與香港邊界鎖定
         const geocoder = new MapboxGeocoder({
             accessToken: mapboxgl.accessToken,
             mapboxgl: mapboxgl,
@@ -389,7 +346,7 @@
             bbox: [113.825, 22.15, 114.45, 22.56],
             proximity: { longitude: 114.1722, latitude: 22.3186 }
         });
-        map.addControl(geocoder, 'top-right');
+        document.getElementById('search-container').appendChild(geocoder.onAdd(map));
 
         geocoder.on('result', (e) => {
             targetCoord = e.result.center;
@@ -414,15 +371,6 @@
             });
         }
 
-        function toggleFilter(category, btnElement) {
-            document.querySelectorAll('.filter-chip').forEach(btn => btn.classList.remove('active'));
-            btnElement.classList.add('active');
-
-            activeMarkers.forEach(item => {
-                item.element.style.display = (category === 'all' || item.type === category) ? 'block' : 'none';
-            });
-        }
-
         const pMarkerEl = document.createElement('div');
         pMarkerEl.className = 'gta-player-marker';
         const playerMarker = new mapboxgl.Marker(pMarkerEl).setLngLat(currentCoord).addTo(map);
@@ -431,7 +379,6 @@
         dMarkerEl.className = 'gta-dest-marker';
         const destMarker = new mapboxgl.Marker(dMarkerEl).setLngLat(targetCoord).addTo(map);
 
-        // ---------------- 語音導航核心邏輯 (iOS Safari 授權解鎖) ----------------
         function unlockAudioEngine() {
             if (!('speechSynthesis' in window) || isAudioUnlocked) return;
             const dummy = new SpeechSynthesisUtterance('');
@@ -474,11 +421,6 @@
             window.speechSynthesis.speak(utterance);
         }
 
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
-        }
-
-        // 接近快相機 350 米語音警報
         function checkSpeedSpots(pos) {
             const navBanner = document.getElementById('nav-banner');
             let nearbySpot = null;
@@ -532,7 +474,6 @@
             return '⬆';
         }
 
-        // 核心路線計算
         async function getRoute(start, end) {
             const trafficUrl = `https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&banner_instructions=true&geometries=geojson&language=zh-Hant&access_token=${mapboxgl.accessToken}`;
             const standardUrl = `https://api.mapbox.com/directions/v5/mapbox/driving/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&banner_instructions=true&geometries=geojson&language=zh-Hant&access_token=${mapboxgl.accessToken}`;
@@ -559,7 +500,6 @@
             const coords = route.geometry.coordinates;
             const steps = route.legs[0].steps;
 
-            // 1. 距離與 ETA
             const distKm = (route.distance / 1000).toFixed(1);
             document.getElementById('dist-text').innerText = `${distKm} KM`;
             
@@ -577,7 +517,6 @@
                 document.getElementById('delay-badge').style.display = 'none';
             }
 
-            // 2. 指引與語音 (迴旋處、幹線與車道)
             if (steps && steps.length > 0) {
                 const activeStep = steps.length > 1 ? steps[1] : steps[0];
                 const instruction = activeStep.maneuver.instruction || '沿路線行駛';
@@ -585,10 +524,8 @@
                 document.getElementById('road-text').innerText = instruction;
                 document.getElementById('turn-icon').innerText = getTurnIcon(activeStep.maneuver);
                 
-                // 播報轉向或迴旋處出路指引
                 speakCantonese(instruction);
 
-                // 龍門架 / 幹線綠底牌
                 const signBox = document.getElementById('sign-box');
                 const signText = document.getElementById('sign-text');
                 if (activeStep.bannerInstructions && activeStep.bannerInstructions.length > 0) {
@@ -598,7 +535,6 @@
                     signBox.style.display = 'none';
                 }
 
-                // 車道指引
                 const laneContainer = document.getElementById('lane-container');
                 laneContainer.innerHTML = '';
                 const intersection = activeStep.intersections ? activeStep.intersections[0] : null;
@@ -616,7 +552,6 @@
                 }
             }
 
-            // 3. 繪製 GTA 霓虹紫線
             const geojson = {
                 type: 'Feature',
                 geometry: { type: 'LineString', coordinates: coords }
@@ -691,7 +626,7 @@
             let heading = null;
             if (event.webkitCompassHeading !== undefined && event.webkitCompassHeading !== null) {
                 heading = event.webkitCompassHeading;
-            } else if (event.alpha !== null) {
+            } else if (event.absolute && event.alpha !== null) {
                 heading = (360 - event.alpha) % 360;
             }
 
