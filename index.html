@@ -51,13 +51,20 @@
             gap: 6px;
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
 
-        /* 香港綠底白字龍門架 / 幹線標記 */
-        .highway-sign-box {
-            display: none;
-            margin-bottom: 2px;
+        .nav-banner.danger-camera {
+            border-left-color: #ef4444 !important;
+            box-shadow: 0 0 25px rgba(239, 68, 68, 0.8) !important;
         }
+        .nav-banner.danger-laser {
+            border-left-color: #f59e0b !important;
+            box-shadow: 0 0 25px rgba(245, 158, 11, 0.8) !important;
+        }
+
+        /* 龍門架 / 幹線綠底牌 */
+        .highway-sign-box { display: none; margin-bottom: 2px; }
         .highway-sign {
             display: inline-block;
             background-color: #047857;
@@ -74,7 +81,7 @@
         .nav-turn-icon { font-size: 32px; line-height: 1; color: #b026ff; min-width: 36px; text-align: center; }
         .nav-text-group { flex-grow: 1; }
 
-        /* ETA 與里程組合列 */
+        /* ETA 與里程列 */
         .nav-eta-row {
             display: flex;
             align-items: baseline;
@@ -127,504 +134,51 @@
         }
         .speed-badge { font-size: 15px; font-weight: 700; color: #ffffff; }
 
-        /* 左上角分類篩選欄 */
+        /* ---------------- 左側「垂直直排」Filter 欄 ---------------- */
         .filter-bar {
             position: absolute;
-            top: calc(118px + env(safe-area-inset-top));
+            top: calc(125px + env(safe-area-inset-top));
             left: calc(16px + env(safe-area-inset-left));
-            display: flex; gap: 8px; z-index: 22; overflow-x: auto;
-            max-width: calc(100vw - 32px); padding-bottom: 4px; scrollbar-width: none;
+            display: flex;
+            flex-direction: column; /* 垂直直排 */
+            gap: 7px;
+            z-index: 25;
+            max-height: calc(100vh - 240px);
+            overflow-y: auto;
+            scrollbar-width: none;
         }
         .filter-bar::-webkit-scrollbar { display: none; }
 
         .filter-chip {
-            background: rgba(10, 14, 18, 0.9); color: #94a3b8;
-            border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 20px;
-            padding: 5px 12px; font-size: 12px; font-weight: 700; white-space: nowrap;
-            cursor: pointer; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            background: rgba(10, 14, 18, 0.92);
+            color: #94a3b8;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            padding: 7px 11px;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             transition: all 0.2s ease;
+            text-align: left;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.7);
         }
         .filter-chip.active {
-            background: rgba(176, 38, 255, 0.25); border-color: #b026ff;
-            color: #d946ef; box-shadow: 0 0 10px rgba(176, 38, 255, 0.4);
+            background: rgba(176, 38, 255, 0.3);
+            border-color: #b026ff;
+            color: #ffffff;
+            box-shadow: 0 0 10px rgba(176, 38, 255, 0.5);
         }
 
-        /* 搜尋框 */
+        /* ---------------- 搜尋框樣式與高層級下拉選單 ---------------- */
         .mapboxgl-ctrl-geocoder {
             position: absolute;
-            top: calc(160px + env(safe-area-inset-top));
+            top: calc(125px + env(safe-area-inset-top));
             right: calc(16px + env(safe-area-inset-right));
-            width: 260px !important; max-width: calc(100vw - 32px) !important;
-            background-color: rgba(10, 14, 18, 0.95) !important;
-            border: 1.5px solid #334155 !important; border-radius: 4px !important;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.8) !important;
-            font-family: 'Oswald', sans-serif !important; z-index: 22;
-        }
-        .mapboxgl-ctrl-geocoder input { color: #ffffff !important; font-size: 13px !important; padding-left: 36px !important; }
-        .mapboxgl-ctrl-geocoder input::placeholder { color: #64748b !important; }
-        .mapboxgl-ctrl-geocoder .mapboxgl-ctrl-geocoder--icon { fill: #b026ff !important; top: 10px !important; }
-        .mapboxgl-ctrl-geocoder .suggestions { background-color: #0a0e12 !important; border: 1px solid #1e293b !important; }
-        .mapboxgl-ctrl-geocoder .suggestions > li > a { color: #cbd5e1 !important; }
-
-        .gta-ruler {
-            position: absolute;
-            bottom: calc(25px + env(safe-area-inset-bottom));
-            left: calc(20px + env(safe-area-inset-left));
-            border-left: 2px solid #ffffff; border-bottom: 2px solid #ffffff;
-            width: 90px; height: 10px; color: #ffffff; font-size: 11px;
-            font-weight: 700; padding-left: 5px; padding-bottom: 2px;
-            line-height: 1; z-index: 15; pointer-events: none; letter-spacing: 1px;
-        }
-
-        .controls-group {
-            position: absolute;
-            bottom: calc(20px + env(safe-area-inset-bottom));
-            right: calc(16px + env(safe-area-inset-right));
-            display: flex; gap: 8px; z-index: 25;
-        }
-        .action-btn {
-            background: rgba(10, 14, 18, 0.9); color: #cbd5e1;
-            border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 4px;
-            padding: 8px 14px; font-size: 12px; font-weight: 700; letter-spacing: 1px;
-            cursor: pointer; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-        }
-        .action-btn.active {
-            border-color: #b026ff; background: #b026ff; color: #ffffff;
-            box-shadow: 0 0 12px rgba(176, 38, 255, 0.6);
-        }
-
-        .gta-player-marker {
-            width: 32px; height: 32px;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpolygon points='16,2 30,30 16,23 2,30' fill='%23ffffff' stroke='%23000000' stroke-width='3' stroke-linejoin='miter'/%3E%3C/svg%3E");
-            background-size: contain; background-repeat: no-repeat;
-            filter: drop-shadow(0px 0px 4px rgba(0,0,0,1));
-            transform-origin: center center; transition: transform 0.15s linear;
-        }
-
-        .gta-dest-marker {
-            width: 22px; height: 22px;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' fill='%2322c55e' stroke='%23ffffff' stroke-width='2'/%3E%3Cpath d='M6 14 L8 9 L16 9 L18 14 Z' fill='%23ffffff'/%3E%3Ccircle cx='8' cy='15' r='1.5' fill='%23000'/%3E%3Ccircle cx='16' cy='15' r='1.5' fill='%23000'/%3E%3C/svg%3E");
-            background-size: contain; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.9));
-        }
-
-        .gta-v-blip {
-            width: 22px; height: 22px; cursor: pointer;
-            filter: drop-shadow(1px 1px 0px #000) drop-shadow(-1px -1px 0px #000) drop-shadow(1px -1px 0px #000) drop-shadow(-1px 1px 0px #000);
-            transition: transform 0.15s ease;
-        }
-        .gta-v-blip:hover { transform: scale(1.3); }
-    </style>
-</head>
-<body>
-    <!-- 頂部 HUD 看板 -->
-    <div class="nav-banner" id="nav-banner">
-        <!-- 龍門架 / 幹線綠底牌 -->
-        <div class="highway-sign-box" id="sign-box">
-            <span class="highway-sign" id="sign-text">幹線指引</span>
-        </div>
-
-        <div class="nav-main">
-            <div class="nav-turn-icon" id="turn-icon">⬆</div>
-            <div class="nav-text-group">
-                <div class="nav-eta-row">
-                    <div class="nav-time-remaining" id="time-remaining">-- MINS</div>
-                    <div class="nav-eta-time" id="eta-time">ETA --:--</div>
-                    <div class="nav-dist" id="dist-text">-- KM</div>
-                    <div class="delay-badge" id="delay-badge" style="display: none;">+0 MIN</div>
-                </div>
-                <div class="nav-road" id="road-text">正在規劃路線...</div>
-            </div>
-        </div>
-
-        <!-- 車道小方格指引 (Lane Guidance) -->
-        <div class="lane-container" id="lane-container"></div>
-
-        <div class="status-row">
-            <div>RADAR: <span id="heading-source" style="color: #ffffff;">NORTH-UP</span></div>
-            <div class="speed-badge" id="speed-text">0 KM/H</div>
-        </div>
-    </div>
-
-    <!-- 左上角分類篩選標籤欄 -->
-    <div class="filter-bar" id="filter-bar">
-        <button class="filter-chip active" onclick="toggleFilter('all', this)">全部</button>
-        <button class="filter-chip" onclick="toggleFilter('camera', this)">📷 快相機</button>
-        <button class="filter-chip" onclick="toggleFilter('laser', this)">🚨 激光槍</button>
-        <button class="filter-chip" onclick="toggleFilter('tunnel', this)">🚇 隧道口</button>
-        <button class="filter-chip" onclick="toggleFilter('slope', this)">⚠️ 長命斜</button>
-        <button class="filter-chip" onclick="toggleFilter('facility', this)">🔧 設施</button>
-    </div>
-
-    <div class="gta-ruler">3305 FT</div>
-
-    <div class="controls-group">
-        <button class="action-btn" id="lock-btn" onclick="toggleHeadingLock()">LOCK CAM</button>
-        <button class="action-btn" id="compass-btn" onclick="requestOrientationPermission()">COMPASS</button>
-    </div>
-
-    <div id="map"></div>
-
-    <script>
-        mapboxgl.accessToken = 'pk.eyJ1Ijoid2lsc29uaG8xMjM0NTY3OCIsImEiOiJjbXZ5dTMwb3Exazc0MnhxNzI5b2IzdW91In0.6MSi7nOdwWNu5se_XE1yZg';
-
-        let currentCoord = [114.2084, 22.3218];
-        let targetCoord = [114.1722, 22.2988];
-        let currentHeading = 0;
-        let currentSpeedKmh = 0;
-        let isHeadingLocked = false;
-        let activeMarkers = [];
-        let currentDurationSec = 0;
-        let lastSpokenInstruction = '';
-
-        const gtaSvgIcons = {
-            gun: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23ffffff' d='M21 9l-4-2H5c-.55 0-1 .45-1 1v3c0 .55.45 1 1 1h1l1 6h3l1-4h3l3 2 4-2v-5z'/%3E%3C/svg%3E`,
-            garage: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23ffffff' d='M19 6V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v1H2v15h20V6h-3zM9 5h6v1H9V5zm11 14H4v-7h16v7z'/%3E%3C/svg%3E`,
-            camera: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23ffffff' d='M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm-8-3h3.15L9 4h6l1.85 2H20a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2zm8 11a5 5 0 1 0 0-10 5 5 0 0 0 0 10z'/%3E%3C/svg%3E`,
-            laser: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23ffffff' d='M12 2L1 21h22L12 2zm0 3.5L19.5 19h-15L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z'/%3E%3C/svg%3E`,
-            tunnel: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23ffffff' d='M4 19V6c0-4.42 3.58-8 8-8s8 3.58 8 8v13H4zm2-2h12V6c0-3.31-2.69-6-6-6S6 2.69 6 6v11z'/%3E%3C/svg%3E`,
-            slope: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23ffffff' d='M1 21h22L1 7v14zm3-2.5l12.5 0L4 10.8v7.7z'/%3E%3C/svg%3E`
-        };
-
-        const gtaPois = [
-            { type: 'camera', icon: 'camera', name: '觀塘繞道固定相機', coords: [114.2120, 22.3180] },
-            { type: 'camera', icon: 'camera', name: '東隧九龍出口相機', coords: [114.2325, 22.2975] },
-            { type: 'laser', icon: 'laser', name: '東九龍走廊 (激光槍)', coords: [114.1880, 22.3140] },
-            { type: 'laser', icon: 'laser', name: '龍翔道豐力樓 (激光槍)', coords: [114.1680, 22.3425] },
-            { type: 'tunnel', icon: 'tunnel', name: '紅磡海底隧道九龍入口', coords: [114.1815, 22.3028] },
-            { type: 'tunnel', icon: 'tunnel', name: '西區海底隧道收費廣場', coords: [114.1585, 22.3040] },
-            { type: 'slope', icon: 'slope', name: '柴灣道長命斜', coords: [114.2345, 22.2640] },
-            { type: 'facility', icon: 'garage', name: 'LOS SANTOS CUSTOMS', coords: [114.1895, 22.3188] },
-            { type: 'facility', icon: 'gun', name: 'AMMU-NATION (旺角)', coords: [114.1725, 22.3175] }
-        ];
-
-        const map = new mapboxgl.Map({
-            container: 'map',
-            style: 'mapbox://styles/mapbox/dark-v11',
-            center: currentCoord,
-            zoom: 14.5,
-            pitch: 0,
-            bearing: 0
-        });
-
-        const geocoder = new MapboxGeocoder({
-            accessToken: mapboxgl.accessToken,
-            mapboxgl: mapboxgl,
-            marker: false,
-            placeholder: '查路搜尋香港目的地...',
-            countries: 'hk',
-            language: 'zh-Hant'
-        });
-        map.addControl(geocoder, 'top-right');
-
-        geocoder.on('result', (e) => {
-            targetCoord = e.result.center;
-            destMarker.setLngLat(targetCoord);
-            getRoute(currentCoord, targetCoord);
-        });
-
-        function renderPoiMarkers() {
-            gtaPois.forEach(poi => {
-                const el = document.createElement('div');
-                el.className = 'gta-v-blip';
-                el.style.backgroundImage = `url("${gtaSvgIcons[poi.icon]}")`;
-                el.style.backgroundSize = 'contain';
-                el.style.backgroundRepeat = 'no-repeat';
-
-                new mapboxgl.Marker(el)
-                    .setLngLat(poi.coords)
-                    .setPopup(new mapboxgl.Popup({ offset: 12 }).setHTML(`<b style="font-family:'Oswald',sans-serif;color:#000;">${poi.name}</b>`))
-                    .addTo(map);
-
-                activeMarkers.push({ type: poi.type, element: el });
-            });
-        }
-
-        function toggleFilter(category, btnElement) {
-            document.querySelectorAll('.filter-chip').forEach(btn => btn.classList.remove('active'));
-            btnElement.classList.add('active');
-
-            activeMarkers.forEach(item => {
-                item.element.style.display = (category === 'all' || item.type === category) ? 'block' : 'none';
-            });
-        }
-
-        const pMarkerEl = document.createElement('div');
-        pMarkerEl.className = 'gta-player-marker';
-        const playerMarker = new mapboxgl.Marker(pMarkerEl).setLngLat(currentCoord).addTo(map);
-
-        const dMarkerEl = document.createElement('div');
-        dMarkerEl.className = 'gta-dest-marker';
-        const destMarker = new mapboxgl.Marker(dMarkerEl).setLngLat(targetCoord).addTo(map);
-
-        function updateETADisplay() {
-            if (currentDurationSec <= 0) return;
-            const etaDate = new Date(Date.now() + currentDurationSec * 1000);
-            const hours = String(etaDate.getHours()).padStart(2, '0');
-            const mins = String(etaDate.getMinutes()).padStart(2, '0');
-            document.getElementById('eta-time').innerText = `ETA ${hours}:${mins}`;
-        }
-        setInterval(updateETADisplay, 15000);
-
-        // 廣東話語音播報
-        function speakCantonese(text) {
-            if (!('speechSynthesis' in window)) return;
-            if (text === lastSpokenInstruction) return;
-
-            lastSpokenInstruction = text;
-            window.speechSynthesis.cancel();
-
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'zh-HK';
-            utterance.rate = 1.0;
-
-            const voices = window.speechSynthesis.getVoices();
-            const hkVoice = voices.find(v => v.lang === 'zh-HK' || v.lang === 'yue-Hant-HK');
-            if (hkVoice) utterance.voice = hkVoice;
-
-            window.speechSynthesis.speak(utterance);
-        }
-
-        // 解析轉向與迴旋處圖示
-        function getTurnIcon(maneuver) {
-            const type = maneuver.type;
-            const modifier = maneuver.modifier || '';
-
-            if (type === 'roundabout' || type === 'rotary') {
-                return '🔄';
-            }
-            if (modifier.includes('right')) return '↗';
-            if (modifier.includes('left')) return '↖';
-            if (modifier.includes('sharp right')) return '⤴';
-            if (modifier.includes('sharp left')) return '⤵';
-            if (modifier.includes('uturn')) return '↩';
-            return '⬆';
-        }
-
-        // 核心導航計算
-        async function getRoute(start, end) {
-            // 加入 banner_instructions=true 取得龍門架與幹線路牌看板資訊
-            const trafficUrl = `https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&banner_instructions=true&geometries=geojson&language=zh-Hant&access_token=${mapboxgl.accessToken}`;
-            const standardUrl = `https://api.mapbox.com/directions/v5/mapbox/driving/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&banner_instructions=true&geometries=geojson&language=zh-Hant&access_token=${mapboxgl.accessToken}`;
-
-            let data = null;
-            try {
-                let res = await fetch(trafficUrl);
-                if (!res.ok) throw new Error('Traffic fallback');
-                data = await res.json();
-                if (!data.routes || !data.routes.length) throw new Error('No traffic routes');
-            } catch (err) {
-                try {
-                    let res = await fetch(standardUrl);
-                    data = await res.json();
-                } catch (e) {
-                    console.error('路線請求失敗:', e);
-                    return;
-                }
-            }
-
-            if (!data || !data.routes || !data.routes.length) return;
-
-            const route = data.routes[0];
-            const coords = route.geometry.coordinates;
-            const steps = route.legs[0].steps;
-
-            // 1. 剩餘里程與 ETA
-            const distKm = (route.distance / 1000).toFixed(1);
-            document.getElementById('dist-text').innerText = `${distKm} KM`;
-            
-            currentDurationSec = route.duration || 0;
-            const durationMin = Math.max(1, Math.round(currentDurationSec / 60));
-            document.getElementById('time-remaining').innerText = `${durationMin} MINS`;
-            updateETADisplay();
-
-            // 2. 延誤時間
-            if (route.duration_typical && route.duration > route.duration_typical + 120) {
-                const delayMins = Math.round((route.duration - route.duration_typical) / 60);
-                const delayBadge = document.getElementById('delay-badge');
-                delayBadge.innerText = `+${delayMins} MINS 延誤`;
-                delayBadge.style.display = 'inline-block';
-            } else {
-                document.getElementById('delay-badge').style.display = 'none';
-            }
-
-            // 3. 轉彎指引、迴旋處、車道與幹線處理
-            if (steps && steps.length > 0) {
-                // 取下一步轉彎（steps[0] 通常為起步，有多個步驟則取 steps[1]）
-                const activeStep = steps.length > 1 ? steps[1] : steps[0];
-                const instruction = activeStep.maneuver.instruction || '沿路線行駛';
-                
-                document.getElementById('road-text').innerText = instruction;
-                document.getElementById('turn-icon').innerText = getTurnIcon(activeStep.maneuver);
-                
-                // 廣東話語音播報（會包含「在迴旋處從第 X 個出口駛出」等明確指引）
-                speakCantonese(instruction);
-
-                // A. 龍門架 / 幹線標記 (Banner Instructions)
-                const signBox = document.getElementById('sign-box');
-                const signText = document.getElementById('sign-text');
-                if (activeStep.bannerInstructions && activeStep.bannerInstructions.length > 0) {
-                    const primary = activeStep.bannerInstructions[0].primary;
-                    signText.innerText = primary.text;
-                    signBox.style.display = 'block';
-                } else {
-                    signBox.style.display = 'none';
-                }
-
-                // B. 車道指引小方格 (Lane Guidance)
-                const laneContainer = document.getElementById('lane-container');
-                laneContainer.innerHTML = '';
-                const intersection = activeStep.intersections ? activeStep.intersections[0] : null;
-
-                if (intersection && intersection.lanes && intersection.lanes.length > 1) {
-                    laneContainer.style.display = 'flex';
-                    intersection.lanes.forEach(lane => {
-                        const box = document.createElement('div');
-                        box.className = 'lane-box' + (lane.valid ? ' valid' : '');
-                        box.innerText = lane.valid ? '↑' : '·';
-                        laneContainer.appendChild(box);
-                    });
-                } else {
-                    laneContainer.style.display = 'none';
-                }
-            }
-
-            // 4. 繪製 GTA 經典紫色導航線
-            const geojson = {
-                type: 'Feature',
-                geometry: { type: 'LineString', coordinates: coords }
-            };
-
-            if (map.getSource('route')) {
-                map.getSource('route').setData(geojson);
-            } else {
-                map.addSource('route', { type: 'geojson', data: geojson });
-
-                map.addLayer({
-                    id: 'route-purple-glow',
-                    type: 'line',
-                    source: 'route',
-                    layout: { 'line-join': 'round', 'line-cap': 'round' },
-                    paint: { 'line-color': '#a855f7', 'line-width': 18, 'line-opacity': 0.45, 'line-blur': 4 }
-                });
-
-                map.addLayer({
-                    id: 'route-black-border',
-                    type: 'line',
-                    source: 'route',
-                    layout: { 'line-join': 'round', 'line-cap': 'round' },
-                    paint: { 'line-color': '#000000', 'line-width': 10, 'line-opacity': 0.95 }
-                });
-
-                map.addLayer({
-                    id: 'route-purple-core',
-                    type: 'line',
-                    source: 'route',
-                    layout: { 'line-join': 'round', 'line-cap': 'round' },
-                    paint: { 'line-color': '#d946ef', 'line-width': 6, 'line-opacity': 1.0 }
-                });
-            }
-        }
-
-        function toggleHeadingLock() {
-            isHeadingLocked = !isHeadingLocked;
-            const btn = document.getElementById('lock-btn');
-            if (isHeadingLocked) {
-                btn.classList.add('active');
-                btn.innerText = '3D DRIVING';
-                map.easeTo({
-                    center: currentCoord,
-                    bearing: currentHeading,
-                    pitch: 65,
-                    padding: { top: Math.round(window.innerHeight * 0.45), bottom: 0, left: 0, right: 0 },
-                    duration: 500
-                });
-                pMarkerEl.style.transform = 'rotate(0deg)';
-                document.getElementById('heading-source').innerText = `LOCKED (${currentHeading}°)`;
-            } else {
-                btn.classList.remove('active');
-                btn.innerText = 'LOCK CAM';
-                map.easeTo({
-                    center: currentCoord,
-                    pitch: 0, zoom: 14.5, bearing: 0,
-                    padding: { top: 0, bottom: 0, left: 0, right: 0 },
-                    duration: 600
-                });
-                pMarkerEl.style.transform = `rotate(${currentHeading}deg)`;
-                document.getElementById('heading-source').innerText = 'NORTH-UP';
-            }
-        }
-
-        map.on('dragstart', () => {
-            if (isHeadingLocked) toggleHeadingLock();
-        });
-
-        function handleOrientation(event) {
-            if (currentSpeedKmh > 5) return;
-            let heading = null;
-            if (event.webkitCompassHeading !== undefined && event.webkitCompassHeading !== null) {
-                heading = event.webkitCompassHeading;
-            } else if (event.alpha !== null) {
-                heading = (360 - event.alpha) % 360;
-            }
-
-            if (heading !== null) {
-                currentHeading = Math.round(heading);
-                if (isHeadingLocked) {
-                    map.easeTo({ center: currentCoord, bearing: currentHeading, duration: 200 });
-                } else {
-                    pMarkerEl.style.transform = `rotate(${currentHeading}deg)`;
-                }
-            }
-        }
-
-        async function requestOrientationPermission() {
-            const btn = document.getElementById('compass-btn');
-            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                try {
-                    const res = await DeviceOrientationEvent.requestPermission();
-                    if (res === 'granted') {
-                        window.addEventListener('deviceorientation', handleOrientation, true);
-                        btn.classList.add('active');
-                    }
-                } catch (e) { console.warn(e); }
-            } else {
-                window.addEventListener('deviceorientation', handleOrientation, true);
-                btn.classList.add('active');
-            }
-        }
-
-        if ('geolocation' in navigator) {
-            navigator.geolocation.watchPosition(
-                (pos) => {
-                    currentCoord = [pos.coords.longitude, pos.coords.latitude];
-                    playerMarker.setLngLat(currentCoord);
-                    currentSpeedKmh = (pos.coords.speed && pos.coords.speed > 0) ? Math.round(pos.coords.speed * 3.6) : 0;
-                    document.getElementById('speed-text').innerText = `${currentSpeedKmh} KM/H`;
-
-                    if (currentSpeedKmh > 5 && pos.coords.heading !== null && !isNaN(pos.coords.heading)) {
-                        currentHeading = Math.round(pos.coords.heading);
-                        if (isHeadingLocked) {
-                            map.easeTo({ center: currentCoord, bearing: currentHeading, duration: 400 });
-                        } else {
-                            pMarkerEl.style.transform = `rotate(${currentHeading}deg)`;
-                        }
-                    }
-                },
-                null,
-                { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
-            );
-        }
-
-        map.on('load', () => {
-            renderPoiMarkers();
-            getRoute(currentCoord, targetCoord);
-        });
-
-        map.on('click', (e) => {
-            targetCoord = [e.lngLat.lng, e.lngLat.lat];
-            destMarker.setLngLat(targetCoord);
-            getRoute(currentCoord, targetCoord);
-        });
-    </script>
-</body>
-</html>
+            width: 250px !important;
+            max-width: calc(100vw - 120px) !important;
+            background-color: rgba(10, 14, 18, 0.96) !important;
+            border: 1.5px solid #334155 !important;
+            border-radius: 6px !
