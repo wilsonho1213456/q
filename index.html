@@ -72,7 +72,7 @@
             letter-spacing: 0.5px;
         }
 
-        .nav-main { display: flex; align-items: center; gap: 14px; }
+        .nav-main { display: flex; align-items: center; gap: 14px; position: relative; }
         .nav-turn-icon { font-size: 32px; line-height: 1; color: #b026ff; min-width: 36px; text-align: center; }
         .nav-text-group { flex-grow: 1; }
 
@@ -94,6 +94,26 @@
         }
 
         .nav-road { font-size: 14px; font-weight: 500; color: #cbd5e1; text-transform: uppercase; margin-top: 2px; }
+
+        /* 導航中退出按鈕 (✕) */
+        .nav-cancel-btn {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid #ef4444;
+            color: #ef4444;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin-left: 6px;
+        }
+        .nav-cancel-btn:active {
+            background: #ef4444;
+            color: #ffffff;
+        }
 
         .lane-container {
             display: none;
@@ -139,9 +159,17 @@
             display: flex;
             flex-direction: column;
             gap: 6px;
+            transition: opacity 0.25s ease, transform 0.25s ease;
         }
 
-        /* 捷徑標籤列 (可橫向捲動) */
+        /* 導航啟動時：完全消失 */
+        #search-container.nav-active-hidden {
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transform: translate(-50%, 25px) !important;
+        }
+
+        /* 捷徑標籤列 */
         .quick-places-bar {
             display: flex;
             gap: 6px;
@@ -177,7 +205,7 @@
         .chip-home { border-color: #38bdf8 !important; color: #bae6fd !important; }
         .chip-work { border-color: #fbbf24 !important; color: #fde68a !important; }
 
-        /* 搜尋框包裝 */
+        /* 搜尋框 */
         .gov-search-wrap {
             position: relative;
             width: 100%;
@@ -265,6 +293,75 @@
         .gov-title { font-size: 14px; font-weight: 700; color: #ffffff; letter-spacing: 0.5px; }
         .gov-desc { font-size: 11px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+        /* 目的地預覽確認卡片 (Modal) */
+        .dest-confirm-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 999999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .dest-confirm-card {
+            width: 100%;
+            max-width: 360px;
+            background: #0b0f15;
+            border-top: 4px solid #b026ff;
+            border-radius: 8px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.95);
+            padding: 18px 20px;
+            color: #fff;
+            animation: popIn 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.9); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-tag { font-size: 10px; color: #a855f7; letter-spacing: 1px; margin-bottom: 4px; }
+        .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 14px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .modal-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            padding: 10px 8px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        .stat-box { display: flex; flex-direction: column; gap: 2px; }
+        .stat-label { font-size: 10px; color: #94a3b8; }
+        .stat-val { font-size: 16px; font-weight: 700; color: #fff; }
+        .stat-val-green { font-size: 16px; font-weight: 700; color: #22c55e; }
+
+        .modal-actions { display: flex; gap: 10px; }
+        .modal-btn {
+            flex: 1;
+            padding: 10px 0;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-cancel { background: rgba(255, 255, 255, 0.1); color: #94a3b8; }
+        .btn-cancel:active { background: rgba(255, 255, 255, 0.2); color: #fff; }
+        .btn-confirm { background: #b026ff; color: #fff; box-shadow: 0 0 15px rgba(176, 38, 255, 0.6); }
+        .btn-confirm:active { background: #9333ea; }
+
         /* 左下比例尺 */
         .gta-ruler {
             position: absolute;
@@ -301,7 +398,7 @@
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpolygon points='16,2 30,30 16,23 2,30' fill='%23ffffff' stroke='%23000000' stroke-width='3' stroke-linejoin='miter'/%3E%3C/svg%3E");
             background-size: contain; background-repeat: no-repeat;
             filter: drop-shadow(0px 0px 4px rgba(0,0,0,1));
-            transform-origin: center center; transition: transform 0.15s linear;
+            transform-origin: center center;
         }
 
         /* 目的地標記 */
@@ -327,6 +424,14 @@
             transition: transform 0.15s ease;
         }
         .gta-v-blip:hover { transform: scale(1.3); }
+
+        /* 橫屏專屬微調 */
+        @media screen and (orientation: landscape) {
+            .nav-banner { top: calc(6px + env(safe-area-inset-top)); padding: 6px 12px; max-width: 420px; }
+            #search-container { bottom: calc(46px + env(safe-area-inset-bottom)); max-width: 420px; }
+            .gov-suggestions { max-height: 140px; }
+            .controls-group { bottom: calc(8px + env(safe-area-inset-bottom)); }
+        }
     </style>
 </head>
 <body>
@@ -347,6 +452,8 @@
                 </div>
                 <div class="nav-road" id="road-text">點擊地圖或搜尋目的地出發</div>
             </div>
+            <!-- 導航中退出掣 -->
+            <button id="nav-cancel-btn" class="nav-cancel-btn" onclick="stopNavigation()" style="display: none;">✕</button>
         </div>
 
         <div class="lane-container" id="lane-container"></div>
@@ -360,11 +467,9 @@
     <!-- 正下方：捷徑列 + 香港搜尋盒 -->
     <div id="search-container">
         <div class="quick-places-bar">
-            <!-- 泊車與尋車 -->
             <button class="quick-chip chip-park" onclick="saveCurrentParking()">🅿️ 記低車位</button>
             <button class="quick-chip chip-find-car" id="find-car-btn" onclick="navToCar()" style="display: none;">🚗 搵返架車</button>
 
-            <!-- 屋企與公司（短按導航、長按自訂） -->
             <button class="quick-chip chip-home" 
                     onmousedown="startLongPress('home')" 
                     onmouseup="cancelLongPress()" 
@@ -380,7 +485,6 @@
                 🏢 公司
             </button>
 
-            <!-- 熱門地標 -->
             <button class="quick-chip" onclick="quickNav('朗豪坊', [114.1687, 22.3193])">🏬 朗豪坊</button>
             <button class="quick-chip" onclick="quickNav('又一城', [114.1751, 22.3369])">🏬 又一城</button>
             <button class="quick-chip" onclick="quickNav('海港城', [114.1685, 22.2982])">🏬 海港城</button>
@@ -399,6 +503,32 @@
             />
             <button type="button" id="search-clear-btn" class="search-clear-btn" onclick="clearSearchInput()">✕</button>
             <ul id="gov-suggestions" class="gov-suggestions"></ul>
+        </div>
+    </div>
+
+    <!-- 目的地預覽確認彈窗 -->
+    <div id="dest-confirm-modal" class="dest-confirm-overlay" style="display: none;">
+        <div class="dest-confirm-card">
+            <div class="modal-tag">DESTINATION PREVIEW</div>
+            <div class="modal-title" id="modal-dest-name">目的地名稱</div>
+            <div class="modal-stats-grid">
+                <div class="stat-box">
+                    <span class="stat-label">預計行程</span>
+                    <span class="stat-val-green" id="modal-duration">-- MINS</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">預計到達</span>
+                    <span class="stat-val" id="modal-eta">--:--</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">行車距離</span>
+                    <span class="stat-val" id="modal-dist">-- KM</span>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn btn-cancel" onclick="cancelRoutePreview()">取消</button>
+                <button class="modal-btn btn-confirm" onclick="confirmStartNavigation()">出發 GO</button>
+            </div>
         </div>
     </div>
 
@@ -424,9 +554,7 @@
         let activeMarkers = [];
         let currentDurationSec = 0;
 
-        // 導航模式控制 ('driving-traffic' 行車 或 'walking' 步行)
         let currentRoutingProfile = 'driving-traffic';
-
         let isVoiceEnabled = true;
         let isAudioUnlocked = false;
         let lastSpokenInstruction = '';
@@ -436,6 +564,11 @@
         let longPressTimer = null;
         let isLongPressTriggered = false;
         let parkedCarMarker = null;
+
+        // 預覽與導航狀態控制
+        let pendingDestName = '';
+        let pendingDestCoord = null;
+        let isNavigating = false;
 
         const gtaSvgIcons = {
             gun: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23ffffff' d='M21 9l-4-2H5c-.55 0-1 .45-1 1v3c0 .55.45 1 1 1h1l1 6h3l1-4h3l3 2 4-2v-5z'/%3E%3C/svg%3E`,
@@ -467,12 +600,10 @@
             bearing: 0
         });
 
-        // ---------------- 雙引擎香港繁中搜尋 (解決 CORS 跨域封鎖問題) ----------------
+        // ---------------- 雙引擎香港繁中搜尋 ----------------
         async function searchHKLocationUnified(keyword) {
             if (!keyword || !keyword.trim()) return [];
             const query = keyword.trim();
-
-            // 引擎 1：Mapbox 官方香港繁中 Geocoding API (支援 CORS，帶 GPS 距離加權)
             const mapboxUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${mapboxgl.accessToken}&country=hk&language=zh-Hant,zh&proximity=${currentCoord[0]},${currentCoord[1]}&limit=6`;
 
             try {
@@ -486,10 +617,9 @@
                     }));
                 }
             } catch (e) {
-                console.warn('Mapbox Places 搜尋失敗，切換至備用庫:', e);
+                console.warn('Mapbox Places 失敗，切換保底庫:', e);
             }
 
-            // 引擎 2 (保底)：OpenStreetMap 香港繁中庫
             try {
                 const osmUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&countrycodes=hk&limit=6&accept-language=zh-HK,zh-Hant`;
                 const res = await fetch(osmUrl);
@@ -500,7 +630,6 @@
                     coords: [parseFloat(item.lon), parseFloat(item.lat)]
                 }));
             } catch (err) {
-                console.error('所有搜尋引擎均失敗:', err);
                 return [];
             }
         }
@@ -518,7 +647,6 @@
                 return;
             }
 
-            // 顯示即時搜尋中反饋
             list.innerHTML = `<li class="gov-item" style="color:#a855f7;padding:12px 14px;">⚡ 正在搜尋香港地點...</li>`;
             list.style.display = 'block';
 
@@ -540,14 +668,11 @@
                     `;
                     li.onclick = () => {
                         currentRoutingProfile = 'driving-traffic';
-                        targetCoord = item.coords;
-                        destMarker.setLngLat(targetCoord);
-                        getRoute(currentCoord, targetCoord);
-
                         input.value = item.name;
                         list.style.display = 'none';
                         clearBtn.style.display = 'flex';
                         input.blur();
+                        previewDestination(item.name, item.coords);
                     };
                     list.appendChild(li);
                 });
@@ -570,20 +695,88 @@
 
         function quickNav(name, coords) {
             currentRoutingProfile = 'driving-traffic';
-            const input = document.getElementById('gov-search-input');
-            const clearBtn = document.getElementById('search-clear-btn');
-            const list = document.getElementById('gov-suggestions');
-
-            if (input) input.value = name;
-            if (clearBtn) clearBtn.style.display = 'flex';
-            if (list) list.style.display = 'none';
-
-            targetCoord = coords;
-            destMarker.setLngLat(targetCoord);
-            getRoute(currentCoord, targetCoord);
+            previewDestination(name, coords);
         }
 
-        // ---------------- 屋企與公司永久記憶管理 ----------------
+        // ---------------- 路線預覽與隱藏控制 ----------------
+        async function previewDestination(name, coords) {
+            pendingDestName = name;
+            pendingDestCoord = coords;
+
+            const isWalking = currentRoutingProfile === 'walking';
+            const apiUrl = isWalking
+                ? `https://api.mapbox.com/directions/v5/mapbox/walking/${currentCoord[0]},${currentCoord[1]};${coords[0]},${coords[1]}?geometries=geojson&language=zh-Hant&access_token=${mapboxgl.accessToken}`
+                : `https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${currentCoord[0]},${currentCoord[1]};${coords[0]},${coords[1]}?geometries=geojson&language=zh-Hant&access_token=${mapboxgl.accessToken}`;
+
+            try {
+                const res = await fetch(apiUrl);
+                const data = await res.json();
+                if (data && data.routes && data.routes.length > 0) {
+                    const r = data.routes[0];
+                    const distKm = (r.distance / 1000).toFixed(1);
+                    const durationMin = Math.max(1, Math.round(r.duration / 60));
+                    const etaDate = new Date(Date.now() + r.duration * 1000);
+                    const etaStr = `${String(etaDate.getHours()).padStart(2, '0')}:${String(etaDate.getMinutes()).padStart(2, '0')}`;
+
+                    document.getElementById('modal-dest-name').innerText = name;
+                    document.getElementById('modal-duration').innerText = `${durationMin} MINS`;
+                    document.getElementById('modal-eta').innerText = etaStr;
+                    document.getElementById('modal-dist').innerText = `${distKm} KM`;
+
+                    destMarker.setLngLat(coords);
+                    map.flyTo({ center: coords, zoom: 15, duration: 800 });
+                    document.getElementById('dest-confirm-modal').style.display = 'flex';
+                } else {
+                    confirmStartNavigation();
+                }
+            } catch (e) {
+                confirmStartNavigation();
+            }
+        }
+
+        function confirmStartNavigation() {
+            document.getElementById('dest-confirm-modal').style.display = 'none';
+
+            // 關鍵：Disappear 所有搜尋框與快捷鍵
+            document.getElementById('search-container').classList.add('nav-active-hidden');
+            document.getElementById('nav-cancel-btn').style.display = 'flex';
+
+            isNavigating = true;
+            targetCoord = pendingDestCoord;
+            destMarker.setLngLat(targetCoord);
+
+            getRoute(currentCoord, targetCoord);
+            map.easeTo({ center: currentCoord, zoom: 16, duration: 600 });
+        }
+
+        function cancelRoutePreview() {
+            document.getElementById('dest-confirm-modal').style.display = 'none';
+            pendingDestCoord = null;
+            pendingDestName = '';
+            map.easeTo({ center: currentCoord, zoom: 14.5, duration: 600 });
+        }
+
+        function stopNavigation() {
+            isNavigating = false;
+            document.getElementById('nav-cancel-btn').style.display = 'none';
+            document.getElementById('search-container').classList.remove('nav-active-hidden');
+
+            if (map.getSource('route')) {
+                map.getSource('route').setData({ type: 'FeatureCollection', features: [] });
+            }
+
+            document.getElementById('road-text').innerText = '點擊地圖或搜尋目的地出發';
+            document.getElementById('time-remaining').innerText = '-- MINS';
+            document.getElementById('eta-time').innerText = 'ETA --:--';
+            document.getElementById('dist-text').innerText = '-- KM';
+            document.getElementById('sign-box').style.display = 'none';
+            document.getElementById('lane-container').style.display = 'none';
+
+            speakCantonese('已結束導航。');
+            map.easeTo({ center: currentCoord, pitch: 0, zoom: 14.5, duration: 600 });
+        }
+
+        // ---------------- 屋企與公司永久記憶 ----------------
         async function setSavedPlace(type) {
             const label = type === 'home' ? '屋企' : '公司';
             const inputAddress = prompt(`請輸入「${label}」地址或大廈名稱（長按隨時可修改）：`);
@@ -612,8 +805,7 @@
             }
 
             const place = JSON.parse(raw);
-            quickNav(place.name, place.coords);
-            speakCantonese(`正在為你規劃前往${label}：${place.name}`);
+            previewDestination(place.name, place.coords);
         }
 
         function startLongPress(type) {
@@ -625,15 +817,10 @@
             }, 800);
         }
 
-        function cancelLongPress() {
-            clearTimeout(longPressTimer);
-        }
-
+        function cancelLongPress() { clearTimeout(longPressTimer); }
         function handleQuickTouchEnd(type) {
             clearTimeout(longPressTimer);
-            if (!isLongPressTriggered) {
-                navToSavedPlace(type);
-            }
+            if (!isLongPressTriggered) navToSavedPlace(type);
         }
 
         // ---------------- 泊車記錄與步行尋車 ----------------
@@ -661,15 +848,7 @@
 
             const data = JSON.parse(raw);
             currentRoutingProfile = 'walking';
-
-            const input = document.getElementById('gov-search-input');
-            if (input) input.value = '座駕位置 (步行尋車)';
-
-            targetCoord = data.coords;
-            destMarker.setLngLat(targetCoord);
-
-            speakCantonese('切換至步行模式，為你規劃返回座駕嘅路線。');
-            getRoute(currentCoord, targetCoord);
+            previewDestination('座駕位置 (步行尋車)', data.coords);
         }
 
         function renderParkedCarMarker(coords, timeStr) {
@@ -678,7 +857,7 @@
             const el = document.createElement('div');
             el.className = 'gta-parked-car-marker';
 
-            parkedCarMarker = new mapboxgl.Marker(el)
+            parkedCarMarker = new mapboxgl.Marker({ element: el, anchor: 'center' })
                 .setLngLat(coords)
                 .setPopup(new mapboxgl.Popup({ offset: 12 }).setHTML(`
                     <div style="font-family:'Oswald',sans-serif;color:#000;">
@@ -706,7 +885,7 @@
             btn.style.display = raw ? 'inline-block' : 'none';
         }
 
-        // ---------------- POI 標記與玩家 ----------------
+        // ---------------- POI 與玩家 Marker ----------------
         function renderPoiMarkers() {
             gtaPois.forEach(poi => {
                 const el = document.createElement('div');
@@ -715,7 +894,7 @@
                 el.style.backgroundSize = 'contain';
                 el.style.backgroundRepeat = 'no-repeat';
 
-                new mapboxgl.Marker(el)
+                new mapboxgl.Marker({ element: el, anchor: 'center' })
                     .setLngLat(poi.coords)
                     .setPopup(new mapboxgl.Popup({ offset: 12 }).setHTML(`<b style="font-family:'Oswald',sans-serif;color:#000;">${poi.name}</b>`))
                     .addTo(map);
@@ -726,13 +905,13 @@
 
         const pMarkerEl = document.createElement('div');
         pMarkerEl.className = 'gta-player-marker';
-        const playerMarker = new mapboxgl.Marker(pMarkerEl).setLngLat(currentCoord).addTo(map);
+        const playerMarker = new mapboxgl.Marker({ element: pMarkerEl, anchor: 'center' }).setLngLat(currentCoord).addTo(map);
 
         const dMarkerEl = document.createElement('div');
         dMarkerEl.className = 'gta-dest-marker';
-        const destMarker = new mapboxgl.Marker(dMarkerEl).setLngLat(targetCoord).addTo(map);
+        const destMarker = new mapboxgl.Marker({ element: dMarkerEl, anchor: 'center' }).setLngLat(targetCoord).addTo(map);
 
-        // ---------------- 語音播報核心 ----------------
+        // ---------------- 語音播報 ----------------
         function unlockAudioEngine() {
             if (!('speechSynthesis' in window) || isAudioUnlocked) return;
             const dummy = new SpeechSynthesisUtterance('');
@@ -830,7 +1009,7 @@
             return '⬆';
         }
 
-        // ---------------- 動態路線規劃 (駕駛 / 步行切換) ----------------
+        // ---------------- 路線規劃 ----------------
         async function getRoute(start, end) {
             const isWalking = currentRoutingProfile === 'walking';
             const apiUrl = isWalking
@@ -851,7 +1030,6 @@
                         let res = await fetch(fallbackUrl);
                         data = await res.json();
                     } catch (e) {
-                        console.error('路線請求失敗:', e);
                         return;
                     }
                 }
@@ -951,6 +1129,7 @@
             }
         }
 
+        // ---------------- 3D 視角與指南針 ----------------
         function toggleHeadingLock() {
             isHeadingLocked = !isHeadingLocked;
             const btn = document.getElementById('lock-btn');
@@ -984,21 +1163,38 @@
             if (isHeadingLocked) toggleHeadingLock();
         });
 
+        function getScreenOrientationAngle() {
+            if (screen.orientation && screen.orientation.angle !== undefined) {
+                return screen.orientation.angle;
+            }
+            if (window.orientation !== undefined) {
+                return window.orientation;
+            }
+            return 0;
+        }
+
         function handleOrientation(event) {
             if (currentSpeedKmh > 5) return;
-            let heading = null;
+            
+            let rawHeading = null;
             if (event.webkitCompassHeading !== undefined && event.webkitCompassHeading !== null) {
-                heading = event.webkitCompassHeading;
+                rawHeading = event.webkitCompassHeading;
             } else if (event.absolute && event.alpha !== null) {
-                heading = (360 - event.alpha) % 360;
+                rawHeading = (360 - event.alpha) % 360;
             }
 
-            if (heading !== null) {
-                currentHeading = Math.round(heading);
+            if (rawHeading !== null) {
+                const screenAngle = getScreenOrientationAngle();
+                currentHeading = Math.round((rawHeading + screenAngle) % 360);
+                if (currentHeading < 0) currentHeading += 360;
+
                 if (isHeadingLocked) {
-                    map.easeTo({ center: currentCoord, bearing: currentHeading, duration: 200 });
+                    map.easeTo({ center: currentCoord, bearing: currentHeading, duration: 150, easing: (t) => t });
+                    pMarkerEl.style.transform = 'rotate(0deg)';
+                    document.getElementById('heading-source').innerText = `LOCKED (${currentHeading}°)`;
                 } else {
                     pMarkerEl.style.transform = `rotate(${currentHeading}deg)`;
+                    document.getElementById('heading-source').innerText = `COMPASS (${currentHeading}°)`;
                 }
             }
         }
@@ -1053,15 +1249,13 @@
                 renderParkedCarMarker(data.coords, data.timestamp);
             }
             updateFindCarButtonState();
-
-            getRoute(currentCoord, targetCoord);
         });
 
+        // 點擊地圖選擇目的地時彈出確認
         map.on('click', (e) => {
+            if (isNavigating) return;
             currentRoutingProfile = 'driving-traffic';
-            targetCoord = [e.lngLat.lng, e.lngLat.lat];
-            destMarker.setLngLat(targetCoord);
-            getRoute(currentCoord, targetCoord);
+            previewDestination('已選取地圖標記', [e.lngLat.lng, e.lngLat.lat]);
         });
     </script>
 </body>
