@@ -16,6 +16,9 @@
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet">
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
     
+    <!-- 引入 Turf.js 處理迷霧幾何挖洞 -->
+    <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+    
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
@@ -570,6 +573,11 @@
         let pendingDestCoord = null;
         let isNavigating = false;
 
+        // ==================== 戰爭迷霧 (Fog of War) 系統變數 ====================
+        let fogPolygon = null;
+        let exploredPoints = [];
+        const EXPLORE_RADIUS_KM = 0.25; // 視野半徑：250 米
+
         const gtaSvgIcons = {
             gun: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23ffffff' d='M21 9l-4-2H5c-.55 0-1 .45-1 1v3c0 .55.45 1 1 1h1l1 6h3l1-4h3l3 2 4-2v-5z'/%3E%3C/svg%3E`,
             garage: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23ffffff' d='M19 6V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v1H2v15h20V6h-3zM9 5h6v1H9V5zm11 14H4v-7h16v7z'/%3E%3C/svg%3E`,
@@ -599,6 +607,81 @@
             pitch: 0,
             bearing: 0
         });
+
+        // ==================== 戰爭迷霧核心函數 ====================
+        function initFogOfWar() {
+            // 讀取先前探索開霧歷史
+            const saved = localStorage.getItem('gta_explored_fog');
+            if (saved) {
+                try { exploredPoints = JSON.parse(saved); } catch (e) { exploredPoints = []; }
+            }
+
+            // 建立覆蓋香港及周邊水域的大多邊形
+            const worldBox = turf.bboxPolygon([113.70, 22.05, 114.55, 22.65]);
+            fogPolygon = worldBox;
+
+            // 批量挖出所有歷史軌跡
+            if (exploredPoints.length > 0) {
+                let multiCircle = null;
+                exploredPoints.forEach(pt => {
+                    const c = turf.circle(pt, EXPLORE_RADIUS_KM, { units: 'kilometers', steps: 16 });
+                    multiCircle = multiCircle ? turf.union(multiCircle, c) : c;
+                });
+                if (multiCircle) {
+                    const diff = turf.difference(fogPolygon, multiCircle);
+                    if (diff) fogPolygon = diff;
+                }
+            }
+
+            map.addSource('fog-layer-source', {
+                type: 'geojson',
+                data: fogPolygon
+            });
+
+            // 迷霧圖層置於建築物之下、但高於底圖
+            map.addLayer({
+                id: 'fog-of-war-layer',
+                type: 'fill',
+                source: 'fog-layer-source',
+                paint: {
+                    'fill-color': '#06090d',
+                    'fill-opacity': 0.88
+                }
+            });
+
+            // 立即以當前 GPS 開霧
+            updateFog(currentCoord);
+        }
+
+        function updateFog(coords) {
+            if (!fogPolygon || !map.getSource('fog-layer-source')) return;
+
+            // 位移未超過 40 米暫不重複計算，保持極速運行
+            const lastPt = exploredPoints[exploredPoints.length - 1];
+            if (lastPt) {
+                const dist = turf.distance(lastPt, coords, { units: 'kilometers' });
+                if (dist < 0.04) return;
+            }
+
+            exploredPoints.push(coords);
+
+            // 每開霧 5 次自動寫入手機儲存
+            if (exploredPoints.length % 5 === 0) {
+                localStorage.setItem('gta_explored_fog', JSON.stringify(exploredPoints));
+            }
+
+            // 生成目前位置視野圓形並從迷霧中扣除
+            const carVision = turf.circle(coords, EXPLORE_RADIUS_KM, { units: 'kilometers', steps: 16 });
+            try {
+                const newFog = turf.difference(fogPolygon, carVision);
+                if (newFog) {
+                    fogPolygon = newFog;
+                    map.getSource('fog-layer-source').setData(fogPolygon);
+                }
+            } catch (err) {
+                console.warn('迷霧幾何計算微小錯誤:', err);
+            }
+        }
 
         // ---------------- 雙引擎香港繁中搜尋 ----------------
         async function searchHKLocationUnified(keyword) {
@@ -737,7 +820,7 @@
         function confirmStartNavigation() {
             document.getElementById('dest-confirm-modal').style.display = 'none';
 
-            // 關鍵：Disappear 所有搜尋框與快捷鍵
+            // 關鍵：隱藏搜尋欄與快捷鍵
             document.getElementById('search-container').classList.add('nav-active-hidden');
             document.getElementById('nav-cancel-btn').style.display = 'flex';
 
@@ -1215,6 +1298,7 @@
             }
         }
 
+        // ---------------- GPS 監控與迷霧實時驅散 ----------------
         if ('geolocation' in navigator) {
             navigator.geolocation.watchPosition(
                 (pos) => {
@@ -1234,6 +1318,7 @@
                     }
 
                     checkSpeedSpots(currentCoord);
+                    updateFog(currentCoord); // 移動時自動開霧
                 },
                 null,
                 { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
@@ -1241,6 +1326,7 @@
         }
 
         map.on('load', () => {
+            initFogOfWar();      // 地圖載入完成後初始化戰爭迷霧
             renderPoiMarkers();
             
             const raw = localStorage.getItem('gta_parked_car');
@@ -1251,7 +1337,7 @@
             updateFindCarButtonState();
         });
 
-        // 點擊地圖選擇目的地時彈出確認
+        // 點擊地圖選擇目的地時彈出預覽
         map.on('click', (e) => {
             if (isNavigating) return;
             currentRoutingProfile = 'driving-traffic';
