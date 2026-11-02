@@ -16,10 +16,6 @@
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet">
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
     
-    <!-- Mapbox Geocoder -->
-    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.min.js"></script>
-    <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v5.0.0/mapbox-gl-geocoder.css" type="text/css">
-    
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
@@ -131,7 +127,7 @@
         }
         .speed-badge { font-size: 15px; font-weight: 700; color: #ffffff; }
 
-        /* ---------------- 正下方搜尋框容器 ---------------- */
+        /* ---------------- 正下方區域：捷徑 + 搜尋 ---------------- */
         #search-container {
             position: absolute;
             bottom: calc(68px + env(safe-area-inset-bottom));
@@ -140,58 +136,134 @@
             width: calc(100% - 32px);
             max-width: 440px;
             z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
         }
 
-        .mapboxgl-ctrl-geocoder {
-            width: 100% !important;
-            max-width: 100% !important;
-            background-color: rgba(10, 14, 18, 0.96) !important;
-            border: 1.5px solid #334155 !important;
-            border-radius: 6px !important;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.95) !important;
-            font-family: 'Oswald', sans-serif !important;
+        /* 捷徑標籤列 (可橫向捲動) */
+        .quick-places-bar {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
         }
-        .mapboxgl-ctrl-geocoder input {
-            color: #ffffff !important;
-            font-size: 13px !important;
-            padding-left: 36px !important;
-        }
-        .mapboxgl-ctrl-geocoder input::placeholder { color: #64748b !important; }
-        .mapboxgl-ctrl-geocoder .mapboxgl-ctrl-geocoder--icon { fill: #b026ff !important; top: 10px !important; }
+        .quick-places-bar::-webkit-scrollbar { display: none; }
 
-        /* 向上展開候選選單 */
-        .mapboxgl-ctrl-geocoder .suggestions {
-            position: absolute !important;
-            bottom: calc(100% + 6px) !important;
-            top: auto !important;
-            left: 0 !important;
-            right: 0 !important;
-            z-index: 99999 !important;
-            background-color: #0c1016 !important;
-            border: 1.5px solid #a855f7 !important;
-            border-radius: 6px !important;
-            box-shadow: 0 -12px 30px rgba(0, 0, 0, 0.98) !important;
-            list-style: none !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            max-height: 240px !important;
-            overflow-y: auto !important;
+        .quick-chip {
+            background: rgba(12, 16, 22, 0.95);
+            color: #e2e8f0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-size: 11px;
+            font-weight: 700;
+            white-space: nowrap;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            transition: transform 0.1s ease, border-color 0.2s ease;
         }
-        .mapboxgl-ctrl-geocoder .suggestions > li {
-            padding: 10px 12px !important;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-            cursor: pointer !important;
+        .quick-chip:active {
+            transform: scale(0.96);
+            border-color: #b026ff;
+            color: #ffffff;
         }
-        .mapboxgl-ctrl-geocoder .suggestions > li > a {
-            color: #cbd5e1 !important;
-            text-decoration: none !important;
-            font-size: 13px !important;
-            display: block !important;
+
+        .chip-park { border-color: #22c55e !important; color: #4ade80 !important; }
+        .chip-find-car { border-color: #e879f9 !important; color: #f5d0fe !important; }
+        .chip-home { border-color: #38bdf8 !important; color: #bae6fd !important; }
+        .chip-work { border-color: #fbbf24 !important; color: #fde68a !important; }
+
+        /* 搜尋框包裝 */
+        .gov-search-wrap {
+            position: relative;
+            width: 100%;
         }
-        .mapboxgl-ctrl-geocoder .suggestions > .active,
-        .mapboxgl-ctrl-geocoder .suggestions > li:hover {
-            background-color: rgba(168, 85, 247, 0.3) !important;
+
+        .gov-search-input {
+            width: 100%;
+            background: rgba(10, 14, 18, 0.96);
+            border: 1.5px solid #334155;
+            border-radius: 6px;
+            color: #ffffff;
+            font-size: 14px;
+            font-family: 'Oswald', -apple-system, sans-serif;
+            padding: 10px 38px 10px 38px;
+            outline: none;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.95);
+            transition: all 0.2s ease;
         }
+        .gov-search-input:focus {
+            border-color: #b026ff;
+            box-shadow: 0 0 12px rgba(176, 38, 255, 0.5);
+        }
+        .gov-search-input::placeholder { color: #64748b; }
+
+        .gov-search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+            color: #b026ff;
+            pointer-events: none;
+        }
+
+        .search-clear-btn {
+            display: none;
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 22px;
+            height: 22px;
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            border-radius: 50%;
+            color: #cbd5e1;
+            font-size: 12px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            padding: 0;
+        }
+        .search-clear-btn:active { background: #ef4444; color: #ffffff; }
+
+        /* 向上彈出官方地點候選選單 */
+        .gov-suggestions {
+            display: none;
+            position: absolute;
+            bottom: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            background: #0c1016;
+            border: 1.5px solid #a855f7;
+            border-radius: 6px;
+            box-shadow: 0 -12px 30px rgba(0, 0, 0, 0.98);
+            max-height: 240px;
+            overflow-y: auto;
+            z-index: 99999;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .gov-item {
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .gov-item:last-child { border-bottom: none; }
+        .gov-item:active, .gov-item:hover { background: rgba(168, 85, 247, 0.25); }
+        .gov-title { font-size: 14px; font-weight: 700; color: #ffffff; letter-spacing: 0.5px; }
+        .gov-desc { font-size: 11px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         /* 左下比例尺 */
         .gta-ruler {
@@ -223,7 +295,7 @@
             box-shadow: 0 0 12px rgba(176, 38, 255, 0.6);
         }
 
-        /* GTA 玩家箭頭 */
+        /* GTA 玩家標記 */
         .gta-player-marker {
             width: 32px; height: 32px;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpolygon points='16,2 30,30 16,23 2,30' fill='%23ffffff' stroke='%23000000' stroke-width='3' stroke-linejoin='miter'/%3E%3C/svg%3E");
@@ -232,11 +304,20 @@
             transform-origin: center center; transition: transform 0.15s linear;
         }
 
-        /* 目的地信標 */
+        /* 目的地標記 */
         .gta-dest-marker {
             width: 22px; height: 22px;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' fill='%2322c55e' stroke='%23ffffff' stroke-width='2'/%3E%3Cpath d='M6 14 L8 9 L16 9 L18 14 Z' fill='%23ffffff'/%3E%3Ccircle cx='8' cy='15' r='1.5' fill='%23000'/%3E%3Ccircle cx='16' cy='15' r='1.5' fill='%23000'/%3E%3C/svg%3E");
             background-size: contain; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.9));
+        }
+
+        /* 泊車位置地圖標記 */
+        .gta-parked-car-marker {
+            width: 26px; height: 26px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%2322c55e' stroke='%23000' stroke-width='1.5' d='M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.85 7h10.29l1.08 3.11H5.77L6.85 7zM19 17H5v-4.66l.12-.34h13.77l.11.34V17z'/%3E%3Ccircle cx='7.5' cy='14.5' r='1.5' fill='%23fff'/%3E%3Ccircle cx='16.5' cy='14.5' r='1.5' fill='%23fff'/%3E%3C/svg%3E");
+            background-size: contain; background-repeat: no-repeat;
+            filter: drop-shadow(0 0 4px rgba(0,0,0,0.9));
+            cursor: pointer;
         }
 
         /* 純白剪影 Blip */
@@ -276,8 +357,50 @@
         </div>
     </div>
 
-    <!-- 正下方搜尋框容器 -->
-    <div id="search-container"></div>
+    <!-- 正下方：捷徑列 + 香港搜尋盒 -->
+    <div id="search-container">
+        <div class="quick-places-bar">
+            <!-- 泊車與尋車 -->
+            <button class="quick-chip chip-park" onclick="saveCurrentParking()">🅿️ 記低車位</button>
+            <button class="quick-chip chip-find-car" id="find-car-btn" onclick="navToCar()" style="display: none;">🚗 搵返架車</button>
+
+            <!-- 屋企與公司（短按導航、長按自訂） -->
+            <button class="quick-chip chip-home" 
+                    onmousedown="startLongPress('home')" 
+                    onmouseup="cancelLongPress()" 
+                    ontouchstart="startLongPress('home')" 
+                    ontouchend="handleQuickTouchEnd('home')">
+                🏠 屋企
+            </button>
+            <button class="quick-chip chip-work" 
+                    onmousedown="startLongPress('work')" 
+                    onmouseup="cancelLongPress()" 
+                    ontouchstart="startLongPress('work')" 
+                    ontouchend="handleQuickTouchEnd('work')">
+                🏢 公司
+            </button>
+
+            <!-- 熱門地標 -->
+            <button class="quick-chip" onclick="quickNav('朗豪坊', [114.1687, 22.3193])">🏬 朗豪坊</button>
+            <button class="quick-chip" onclick="quickNav('又一城', [114.1751, 22.3369])">🏬 又一城</button>
+            <button class="quick-chip" onclick="quickNav('海港城', [114.1685, 22.2982])">🏬 海港城</button>
+            <button class="quick-chip" onclick="quickNav('香港國際機場', [113.9145, 22.3080])">✈️ 機場</button>
+        </div>
+
+        <div class="gov-search-wrap">
+            <span class="gov-search-icon">🔍</span>
+            <input 
+                type="text" 
+                id="gov-search-input" 
+                class="gov-search-input" 
+                placeholder="查路搜尋香港商場、大廈、街道..." 
+                autocomplete="off" 
+                oninput="handleSearchInput(this)"
+            />
+            <button type="button" id="search-clear-btn" class="search-clear-btn" onclick="clearSearchInput()">✕</button>
+            <ul id="gov-suggestions" class="gov-suggestions"></ul>
+        </div>
+    </div>
 
     <div class="gta-ruler">3305 FT</div>
 
@@ -301,10 +424,18 @@
         let activeMarkers = [];
         let currentDurationSec = 0;
 
+        // 導航模式控制 ('driving-traffic' 行車 或 'walking' 步行)
+        let currentRoutingProfile = 'driving-traffic';
+
         let isVoiceEnabled = true;
         let isAudioUnlocked = false;
         let lastSpokenInstruction = '';
         let lastAlertedSpot = null;
+        let searchDebounceTimer = null;
+
+        let longPressTimer = null;
+        let isLongPressTriggered = false;
+        let parkedCarMarker = null;
 
         const gtaSvgIcons = {
             gun: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23ffffff' d='M21 9l-4-2H5c-.55 0-1 .45-1 1v3c0 .55.45 1 1 1h1l1 6h3l1-4h3l3 2 4-2v-5z'/%3E%3C/svg%3E`,
@@ -336,24 +467,246 @@
             bearing: 0
         });
 
-        const geocoder = new MapboxGeocoder({
-            accessToken: mapboxgl.accessToken,
-            mapboxgl: mapboxgl,
-            marker: false,
-            placeholder: '查路搜尋香港目的地...',
-            language: 'zh-Hant,zh,en',
-            countries: 'HK',
-            bbox: [113.825, 22.15, 114.45, 22.56],
-            proximity: { longitude: 114.1722, latitude: 22.3186 }
-        });
-        document.getElementById('search-container').appendChild(geocoder.onAdd(map));
+        // ---------------- 雙引擎香港繁中搜尋 (解決 CORS 跨域封鎖問題) ----------------
+        async function searchHKLocationUnified(keyword) {
+            if (!keyword || !keyword.trim()) return [];
+            const query = keyword.trim();
 
-        geocoder.on('result', (e) => {
-            targetCoord = e.result.center;
+            // 引擎 1：Mapbox 官方香港繁中 Geocoding API (支援 CORS，帶 GPS 距離加權)
+            const mapboxUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${mapboxgl.accessToken}&country=hk&language=zh-Hant,zh&proximity=${currentCoord[0]},${currentCoord[1]}&limit=6`;
+
+            try {
+                const res = await fetch(mapboxUrl);
+                const data = await res.json();
+                if (data && data.features && data.features.length > 0) {
+                    return data.features.map(f => ({
+                        name: f.text || f.place_name.split(',')[0],
+                        address: f.place_name,
+                        coords: f.center
+                    }));
+                }
+            } catch (e) {
+                console.warn('Mapbox Places 搜尋失敗，切換至備用庫:', e);
+            }
+
+            // 引擎 2 (保底)：OpenStreetMap 香港繁中庫
+            try {
+                const osmUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&countrycodes=hk&limit=6&accept-language=zh-HK,zh-Hant`;
+                const res = await fetch(osmUrl);
+                const data = await res.json();
+                return data.map(item => ({
+                    name: item.name || item.display_name.split(',')[0],
+                    address: item.display_name,
+                    coords: [parseFloat(item.lon), parseFloat(item.lat)]
+                }));
+            } catch (err) {
+                console.error('所有搜尋引擎均失敗:', err);
+                return [];
+            }
+        }
+
+        function handleSearchInput(input) {
+            clearTimeout(searchDebounceTimer);
+            const val = input.value.trim();
+            const list = document.getElementById('gov-suggestions');
+            const clearBtn = document.getElementById('search-clear-btn');
+
+            clearBtn.style.display = input.value.length > 0 ? 'flex' : 'none';
+
+            if (!val) {
+                list.style.display = 'none';
+                return;
+            }
+
+            // 顯示即時搜尋中反饋
+            list.innerHTML = `<li class="gov-item" style="color:#a855f7;padding:12px 14px;">⚡ 正在搜尋香港地點...</li>`;
+            list.style.display = 'block';
+
+            searchDebounceTimer = setTimeout(async () => {
+                const results = await searchHKLocationUnified(val);
+                list.innerHTML = '';
+
+                if (!results || results.length === 0) {
+                    list.innerHTML = `<li class="gov-item" style="color:#94a3b8;padding:12px 14px;">搵唔到「${val}」，請嘗試輸入更具體地名。</li>`;
+                    return;
+                }
+
+                results.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = 'gov-item';
+                    li.innerHTML = `
+                        <span class="gov-title">${item.name}</span>
+                        ${item.address ? `<span class="gov-desc">${item.address}</span>` : ''}
+                    `;
+                    li.onclick = () => {
+                        currentRoutingProfile = 'driving-traffic';
+                        targetCoord = item.coords;
+                        destMarker.setLngLat(targetCoord);
+                        getRoute(currentCoord, targetCoord);
+
+                        input.value = item.name;
+                        list.style.display = 'none';
+                        clearBtn.style.display = 'flex';
+                        input.blur();
+                    };
+                    list.appendChild(li);
+                });
+            }, 280);
+        }
+
+        function clearSearchInput() {
+            const input = document.getElementById('gov-search-input');
+            input.value = '';
+            document.getElementById('search-clear-btn').style.display = 'none';
+            document.getElementById('gov-suggestions').style.display = 'none';
+            input.focus();
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#search-container')) {
+                document.getElementById('gov-suggestions').style.display = 'none';
+            }
+        });
+
+        function quickNav(name, coords) {
+            currentRoutingProfile = 'driving-traffic';
+            const input = document.getElementById('gov-search-input');
+            const clearBtn = document.getElementById('search-clear-btn');
+            const list = document.getElementById('gov-suggestions');
+
+            if (input) input.value = name;
+            if (clearBtn) clearBtn.style.display = 'flex';
+            if (list) list.style.display = 'none';
+
+            targetCoord = coords;
             destMarker.setLngLat(targetCoord);
             getRoute(currentCoord, targetCoord);
-        });
+        }
 
+        // ---------------- 屋企與公司永久記憶管理 ----------------
+        async function setSavedPlace(type) {
+            const label = type === 'home' ? '屋企' : '公司';
+            const inputAddress = prompt(`請輸入「${label}」地址或大廈名稱（長按隨時可修改）：`);
+            if (!inputAddress || !inputAddress.trim()) return;
+
+            const results = await searchHKLocationUnified(inputAddress.trim());
+            if (!results || results.length === 0) {
+                alert('搵唔到該地址，請輸入更具體嘅街道或大廈名稱。');
+                return;
+            }
+
+            const best = results[0];
+            const placeData = { name: best.name, coords: best.coords };
+            localStorage.setItem(`gta_fav_${type}`, JSON.stringify(placeData));
+            speakCantonese(`已設定${label}為 ${placeData.name}`);
+            alert(`✅ 已成功設定「${label}」：\n${placeData.name}`);
+        }
+
+        function navToSavedPlace(type) {
+            const raw = localStorage.getItem(`gta_fav_${type}`);
+            const label = type === 'home' ? '屋企' : '公司';
+
+            if (!raw) {
+                setSavedPlace(type);
+                return;
+            }
+
+            const place = JSON.parse(raw);
+            quickNav(place.name, place.coords);
+            speakCantonese(`正在為你規劃前往${label}：${place.name}`);
+        }
+
+        function startLongPress(type) {
+            isLongPressTriggered = false;
+            longPressTimer = setTimeout(() => {
+                isLongPressTriggered = true;
+                if (navigator.vibrate) navigator.vibrate(50);
+                setSavedPlace(type);
+            }, 800);
+        }
+
+        function cancelLongPress() {
+            clearTimeout(longPressTimer);
+        }
+
+        function handleQuickTouchEnd(type) {
+            clearTimeout(longPressTimer);
+            if (!isLongPressTriggered) {
+                navToSavedPlace(type);
+            }
+        }
+
+        // ---------------- 泊車記錄與步行尋車 ----------------
+        function saveCurrentParking() {
+            const parkingData = {
+                coords: [currentCoord[0], currentCoord[1]],
+                timestamp: new Date().toLocaleTimeString('zh-HK', { hour: '2-digit', minute: '2-digit' })
+            };
+
+            localStorage.setItem('gta_parked_car', JSON.stringify(parkingData));
+            renderParkedCarMarker(parkingData.coords, parkingData.timestamp);
+            updateFindCarButtonState();
+
+            if (navigator.vibrate) navigator.vibrate(80);
+            speakCantonese('已為你記低當前泊車位置。');
+            alert(`✅ 已記錄車位！\n時間：${parkingData.timestamp}`);
+        }
+
+        function navToCar() {
+            const raw = localStorage.getItem('gta_parked_car');
+            if (!raw) {
+                alert('尚未記錄任何車位！');
+                return;
+            }
+
+            const data = JSON.parse(raw);
+            currentRoutingProfile = 'walking';
+
+            const input = document.getElementById('gov-search-input');
+            if (input) input.value = '座駕位置 (步行尋車)';
+
+            targetCoord = data.coords;
+            destMarker.setLngLat(targetCoord);
+
+            speakCantonese('切換至步行模式，為你規劃返回座駕嘅路線。');
+            getRoute(currentCoord, targetCoord);
+        }
+
+        function renderParkedCarMarker(coords, timeStr) {
+            if (parkedCarMarker) parkedCarMarker.remove();
+
+            const el = document.createElement('div');
+            el.className = 'gta-parked-car-marker';
+
+            parkedCarMarker = new mapboxgl.Marker(el)
+                .setLngLat(coords)
+                .setPopup(new mapboxgl.Popup({ offset: 12 }).setHTML(`
+                    <div style="font-family:'Oswald',sans-serif;color:#000;">
+                        <b>🚗 泊車位置</b><br>
+                        記錄時間: ${timeStr}<br>
+                        <button onclick="clearParking()" style="margin-top:5px;background:#ef4444;color:#fff;border:none;padding:2px 6px;border-radius:3px;cursor:pointer;">清除紀錄</button>
+                    </div>
+                `))
+                .addTo(map);
+        }
+
+        function clearParking() {
+            localStorage.removeItem('gta_parked_car');
+            if (parkedCarMarker) {
+                parkedCarMarker.remove();
+                parkedCarMarker = null;
+            }
+            updateFindCarButtonState();
+            speakCantonese('已清除泊車位置紀錄。');
+        }
+
+        function updateFindCarButtonState() {
+            const btn = document.getElementById('find-car-btn');
+            const raw = localStorage.getItem('gta_parked_car');
+            btn.style.display = raw ? 'inline-block' : 'none';
+        }
+
+        // ---------------- POI 標記與玩家 ----------------
         function renderPoiMarkers() {
             gtaPois.forEach(poi => {
                 const el = document.createElement('div');
@@ -379,6 +732,7 @@
         dMarkerEl.className = 'gta-dest-marker';
         const destMarker = new mapboxgl.Marker(dMarkerEl).setLngLat(targetCoord).addTo(map);
 
+        // ---------------- 語音播報核心 ----------------
         function unlockAudioEngine() {
             if (!('speechSynthesis' in window) || isAudioUnlocked) return;
             const dummy = new SpeechSynthesisUtterance('');
@@ -422,6 +776,8 @@
         }
 
         function checkSpeedSpots(pos) {
+            if (currentRoutingProfile === 'walking') return;
+
             const navBanner = document.getElementById('nav-banner');
             let nearbySpot = null;
 
@@ -474,23 +830,30 @@
             return '⬆';
         }
 
+        // ---------------- 動態路線規劃 (駕駛 / 步行切換) ----------------
         async function getRoute(start, end) {
-            const trafficUrl = `https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&banner_instructions=true&geometries=geojson&language=zh-Hant&access_token=${mapboxgl.accessToken}`;
-            const standardUrl = `https://api.mapbox.com/directions/v5/mapbox/driving/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&banner_instructions=true&geometries=geojson&language=zh-Hant&access_token=${mapboxgl.accessToken}`;
+            const isWalking = currentRoutingProfile === 'walking';
+            const apiUrl = isWalking
+                ? `https://api.mapbox.com/directions/v5/mapbox/walking/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&language=zh-Hant&access_token=${mapboxgl.accessToken}`
+                : `https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&banner_instructions=true&geometries=geojson&language=zh-Hant&access_token=${mapboxgl.accessToken}`;
+
+            const fallbackUrl = `https://api.mapbox.com/directions/v5/mapbox/driving/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&banner_instructions=true&geometries=geojson&language=zh-Hant&access_token=${mapboxgl.accessToken}`;
 
             let data = null;
             try {
-                let res = await fetch(trafficUrl);
-                if (!res.ok) throw new Error('Traffic fallback');
+                let res = await fetch(apiUrl);
+                if (!res.ok) throw new Error('Primary routing failed');
                 data = await res.json();
-                if (!data.routes || !data.routes.length) throw new Error('No traffic routes');
+                if (!data.routes || !data.routes.length) throw new Error('No routes');
             } catch (err) {
-                try {
-                    let res = await fetch(standardUrl);
-                    data = await res.json();
-                } catch (e) {
-                    console.error('路線請求失敗:', e);
-                    return;
+                if (!isWalking) {
+                    try {
+                        let res = await fetch(fallbackUrl);
+                        data = await res.json();
+                    } catch (e) {
+                        console.error('路線請求失敗:', e);
+                        return;
+                    }
                 }
             }
 
@@ -508,7 +871,7 @@
             document.getElementById('time-remaining').innerText = `${durationMin} MINS`;
             updateETADisplay();
 
-            if (route.duration_typical && route.duration > route.duration_typical + 120) {
+            if (!isWalking && route.duration_typical && route.duration > route.duration_typical + 120) {
                 const delayMins = Math.round((route.duration - route.duration_typical) / 60);
                 const delayBadge = document.getElementById('delay-badge');
                 delayBadge.innerText = `+${delayMins} MINS 延誤`;
@@ -519,16 +882,16 @@
 
             if (steps && steps.length > 0) {
                 const activeStep = steps.length > 1 ? steps[1] : steps[0];
-                const instruction = activeStep.maneuver.instruction || '沿路線行駛';
+                const instruction = activeStep.maneuver.instruction || (isWalking ? '沿路線步行' : '沿路線行駛');
                 
-                document.getElementById('road-text').innerText = instruction;
+                document.getElementById('road-text').innerText = (isWalking ? '🚶 ' : '') + instruction;
                 document.getElementById('turn-icon').innerText = getTurnIcon(activeStep.maneuver);
                 
                 speakCantonese(instruction);
 
                 const signBox = document.getElementById('sign-box');
                 const signText = document.getElementById('sign-text');
-                if (activeStep.bannerInstructions && activeStep.bannerInstructions.length > 0) {
+                if (!isWalking && activeStep.bannerInstructions && activeStep.bannerInstructions.length > 0) {
                     signText.innerText = activeStep.bannerInstructions[0].primary.text;
                     signBox.style.display = 'block';
                 } else {
@@ -539,7 +902,7 @@
                 laneContainer.innerHTML = '';
                 const intersection = activeStep.intersections ? activeStep.intersections[0] : null;
 
-                if (intersection && intersection.lanes && intersection.lanes.length > 1) {
+                if (!isWalking && intersection && intersection.lanes && intersection.lanes.length > 1) {
                     laneContainer.style.display = 'flex';
                     intersection.lanes.forEach(lane => {
                         const box = document.createElement('div');
@@ -683,10 +1046,19 @@
 
         map.on('load', () => {
             renderPoiMarkers();
+            
+            const raw = localStorage.getItem('gta_parked_car');
+            if (raw) {
+                const data = JSON.parse(raw);
+                renderParkedCarMarker(data.coords, data.timestamp);
+            }
+            updateFindCarButtonState();
+
             getRoute(currentCoord, targetCoord);
         });
 
         map.on('click', (e) => {
+            currentRoutingProfile = 'driving-traffic';
             targetCoord = [e.lngLat.lng, e.lngLat.lat];
             destMarker.setLngLat(targetCoord);
             getRoute(currentCoord, targetCoord);
