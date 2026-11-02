@@ -16,7 +16,7 @@
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet">
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
     
-    <!-- 引入 Turf.js 處理迷霧幾何挖洞 -->
+    <!-- 引入 Turf.js 處理迷霧幾何挖洞與偏航距離運算 -->
     <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
     
     <style>
@@ -61,6 +61,10 @@
             border-left-color: #f59e0b !important;
             box-shadow: 0 0 25px rgba(245, 158, 11, 0.8) !important;
         }
+        .nav-banner.rerouting-alert {
+            border-left-color: #38bdf8 !important;
+            box-shadow: 0 0 25px rgba(56, 189, 248, 0.8) !important;
+        }
 
         .highway-sign-box { display: none; margin-bottom: 2px; }
         .highway-sign {
@@ -76,7 +80,9 @@
         }
 
         .nav-main { display: flex; align-items: center; gap: 14px; position: relative; }
-        .nav-turn-icon { font-size: 32px; line-height: 1; color: #b026ff; min-width: 36px; text-align: center; }
+        .nav-turn-col { display: flex; flex-direction: column; align-items: center; min-width: 44px; }
+        .nav-turn-icon { font-size: 30px; line-height: 1; color: #b026ff; text-align: center; }
+        .nav-step-dist { font-size: 11px; font-weight: 700; color: #e2e8f0; margin-top: 2px; }
         .nav-text-group { flex-grow: 1; }
 
         .nav-eta-row {
@@ -112,35 +118,68 @@
             justify-content: center;
             cursor: pointer;
             margin-left: 6px;
+            flex-shrink: 0;
         }
         .nav-cancel-btn:active {
             background: #ef4444;
             color: #ffffff;
         }
 
+        /* ================= 強化版高對比車道指引 (Lane Guidance) ================= */
         .lane-container {
             display: none;
-            gap: 6px;
-            padding-top: 6px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            align-items: center;
-        }
-        .lane-box {
-            display: flex;
+            gap: 8px;
+            padding: 8px 10px 6px 10px;
+            margin-top: 2px;
+            background: rgba(0, 0, 0, 0.45);
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 6px;
             align-items: center;
             justify-content: center;
-            width: 22px;
-            height: 22px;
-            border-radius: 4px;
-            background: rgba(255, 255, 255, 0.08);
-            color: #64748b;
-            font-size: 13px;
-            font-weight: 700;
         }
+
+        .lane-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 36px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1.5px dashed rgba(255, 255, 255, 0.15);
+            color: rgba(255, 255, 255, 0.22);
+            font-size: 18px;
+            font-weight: 700;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        /* 推薦行駛車道：亮眼螢光綠 + 粗白邊 + 動態光暈 */
         .lane-box.valid {
-            background: #b026ff;
+            background: linear-gradient(180deg, #22c55e 0%, #15803d 100%);
+            border: 2px solid #ffffff;
             color: #ffffff;
-            box-shadow: 0 0 8px rgba(176, 38, 255, 0.8);
+            font-size: 22px;
+            box-shadow: 0 0 14px rgba(34, 197, 94, 0.95), inset 0 0 6px rgba(255, 255, 255, 0.4);
+            transform: translateY(-1px) scale(1.06);
+            z-index: 2;
+            animation: lanePulse 1.2s infinite alternate ease-in-out;
+        }
+
+        /* 車道底部指示橫條 */
+        .lane-box.valid::after {
+            content: 'GO';
+            font-size: 8px;
+            line-height: 1;
+            letter-spacing: 0.5px;
+            color: #dcfce7;
+            margin-top: -2px;
+        }
+
+        @keyframes lanePulse {
+            0% { box-shadow: 0 0 10px rgba(34, 197, 94, 0.75); }
+            100% { box-shadow: 0 0 20px rgba(34, 197, 94, 1), 0 0 6px #ffffff; }
         }
 
         .status-row {
@@ -431,6 +470,8 @@
         /* 橫屏專屬微調 */
         @media screen and (orientation: landscape) {
             .nav-banner { top: calc(6px + env(safe-area-inset-top)); padding: 6px 12px; max-width: 420px; }
+            .lane-box { width: 30px; height: 30px; font-size: 16px; }
+            .lane-box.valid { font-size: 18px; }
             #search-container { bottom: calc(46px + env(safe-area-inset-bottom)); max-width: 420px; }
             .gov-suggestions { max-height: 140px; }
             .controls-group { bottom: calc(8px + env(safe-area-inset-bottom)); }
@@ -445,7 +486,10 @@
         </div>
 
         <div class="nav-main">
-            <div class="nav-turn-icon" id="turn-icon">⬆</div>
+            <div class="nav-turn-col">
+                <div class="nav-turn-icon" id="turn-icon">⬆</div>
+                <div class="nav-step-dist" id="step-dist-text"></div>
+            </div>
             <div class="nav-text-group">
                 <div class="nav-eta-row">
                     <div class="nav-time-remaining" id="time-remaining">-- MINS</div>
@@ -459,6 +503,7 @@
             <button id="nav-cancel-btn" class="nav-cancel-btn" onclick="stopNavigation()" style="display: none;">✕</button>
         </div>
 
+        <!-- 強化版車道指引列 -->
         <div class="lane-container" id="lane-container"></div>
 
         <div class="status-row">
@@ -560,7 +605,6 @@
         let currentRoutingProfile = 'driving-traffic';
         let isVoiceEnabled = true;
         let isAudioUnlocked = false;
-        let lastSpokenInstruction = '';
         let lastAlertedSpot = null;
         let searchDebounceTimer = null;
 
@@ -568,15 +612,22 @@
         let isLongPressTriggered = false;
         let parkedCarMarker = null;
 
-        // 預覽與導航狀態控制
         let pendingDestName = '';
         let pendingDestCoord = null;
         let isNavigating = false;
 
+        // Turn-by-Turn 逐段推進與偏航重算變數
+        let currentRouteCoords = [];
+        let routeSteps = [];
+        let currentStepIndex = 1;
+        let stepVoiceStage = 0; // 0:未報, 1:已報初段, 2:已報中段(500m/250m), 3:已報臨近轉彎
+        let isRerouting = false;
+        let lastRerouteTime = 0;
+
         // ==================== 戰爭迷霧 (Fog of War) 系統變數 ====================
         let fogPolygon = null;
         let exploredPoints = [];
-        const EXPLORE_RADIUS_KM = 0.25; // 視野半徑：250 米
+        const EXPLORE_RADIUS_KM = 0.25;
 
         const gtaSvgIcons = {
             gun: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23ffffff' d='M21 9l-4-2H5c-.55 0-1 .45-1 1v3c0 .55.45 1 1 1h1l1 6h3l1-4h3l3 2 4-2v-5z'/%3E%3C/svg%3E`,
@@ -610,17 +661,14 @@
 
         // ==================== 戰爭迷霧核心函數 ====================
         function initFogOfWar() {
-            // 讀取先前探索開霧歷史
             const saved = localStorage.getItem('gta_explored_fog');
             if (saved) {
                 try { exploredPoints = JSON.parse(saved); } catch (e) { exploredPoints = []; }
             }
 
-            // 建立覆蓋香港及周邊水域的大多邊形
             const worldBox = turf.bboxPolygon([113.70, 22.05, 114.55, 22.65]);
             fogPolygon = worldBox;
 
-            // 批量挖出所有歷史軌跡
             if (exploredPoints.length > 0) {
                 let multiCircle = null;
                 exploredPoints.forEach(pt => {
@@ -638,25 +686,31 @@
                 data: fogPolygon
             });
 
-            // 迷霧圖層置於建築物之下、但高於底圖
             map.addLayer({
                 id: 'fog-of-war-layer',
                 type: 'fill',
                 source: 'fog-layer-source',
+                layout: {
+                    'visibility': 'visible'
+                },
                 paint: {
                     'fill-color': '#06090d',
                     'fill-opacity': 0.88
                 }
             });
 
-            // 立即以當前 GPS 開霧
             updateFog(currentCoord);
+        }
+
+        function setFogVisibility(visible) {
+            if (map.getLayer('fog-of-war-layer')) {
+                map.setLayoutProperty('fog-of-war-layer', 'visibility', visible ? 'visible' : 'none');
+            }
         }
 
         function updateFog(coords) {
             if (!fogPolygon || !map.getSource('fog-layer-source')) return;
 
-            // 位移未超過 40 米暫不重複計算，保持極速運行
             const lastPt = exploredPoints[exploredPoints.length - 1];
             if (lastPt) {
                 const dist = turf.distance(lastPt, coords, { units: 'kilometers' });
@@ -665,12 +719,10 @@
 
             exploredPoints.push(coords);
 
-            // 每開霧 5 次自動寫入手機儲存
             if (exploredPoints.length % 5 === 0) {
                 localStorage.setItem('gta_explored_fog', JSON.stringify(exploredPoints));
             }
 
-            // 生成目前位置視野圓形並從迷霧中扣除
             const carVision = turf.circle(coords, EXPLORE_RADIUS_KM, { units: 'kilometers', steps: 16 });
             try {
                 const newFog = turf.difference(fogPolygon, carVision);
@@ -678,9 +730,7 @@
                     fogPolygon = newFog;
                     map.getSource('fog-layer-source').setData(fogPolygon);
                 }
-            } catch (err) {
-                console.warn('迷霧幾何計算微小錯誤:', err);
-            }
+            } catch (err) {}
         }
 
         // ---------------- 雙引擎香港繁中搜尋 ----------------
@@ -699,9 +749,7 @@
                         coords: f.center
                     }));
                 }
-            } catch (e) {
-                console.warn('Mapbox Places 失敗，切換保底庫:', e);
-            }
+            } catch (e) {}
 
             try {
                 const osmUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&countrycodes=hk&limit=6&accept-language=zh-HK,zh-Hant`;
@@ -781,7 +829,7 @@
             previewDestination(name, coords);
         }
 
-        // ---------------- 路線預覽與隱藏控制 ----------------
+        // ---------------- 路線預覽與導航啟動 ----------------
         async function previewDestination(name, coords) {
             pendingDestName = name;
             pendingDestCoord = coords;
@@ -818,17 +866,19 @@
         }
 
         function confirmStartNavigation() {
+            unlockAudioEngine();
             document.getElementById('dest-confirm-modal').style.display = 'none';
 
-            // 關鍵：隱藏搜尋欄與快捷鍵
             document.getElementById('search-container').classList.add('nav-active-hidden');
             document.getElementById('nav-cancel-btn').style.display = 'flex';
+
+            setFogVisibility(false);
 
             isNavigating = true;
             targetCoord = pendingDestCoord;
             destMarker.setLngLat(targetCoord);
 
-            getRoute(currentCoord, targetCoord);
+            getRoute(currentCoord, targetCoord, false);
             map.easeTo({ center: currentCoord, zoom: 16, duration: 600 });
         }
 
@@ -841,8 +891,12 @@
 
         function stopNavigation() {
             isNavigating = false;
+            routeSteps = [];
+            currentRouteCoords = [];
             document.getElementById('nav-cancel-btn').style.display = 'none';
             document.getElementById('search-container').classList.remove('nav-active-hidden');
+
+            setFogVisibility(true);
 
             if (map.getSource('route')) {
                 map.getSource('route').setData({ type: 'FeatureCollection', features: [] });
@@ -852,10 +906,11 @@
             document.getElementById('time-remaining').innerText = '-- MINS';
             document.getElementById('eta-time').innerText = 'ETA --:--';
             document.getElementById('dist-text').innerText = '-- KM';
+            document.getElementById('step-dist-text').innerText = '';
             document.getElementById('sign-box').style.display = 'none';
             document.getElementById('lane-container').style.display = 'none';
 
-            speakCantonese('已結束導航。');
+            speakCantonese('已結束導航。', true);
             map.easeTo({ center: currentCoord, pitch: 0, zoom: 14.5, duration: 600 });
         }
 
@@ -874,20 +929,18 @@
             const best = results[0];
             const placeData = { name: best.name, coords: best.coords };
             localStorage.setItem(`gta_fav_${type}`, JSON.stringify(placeData));
-            speakCantonese(`已設定${label}為 ${placeData.name}`);
+            speakCantonese(`已設定${label}為 ${placeData.name}`, true);
             alert(`✅ 已成功設定「${label}」：\n${placeData.name}`);
         }
 
         function navToSavedPlace(type) {
             const raw = localStorage.getItem(`gta_fav_${type}`);
-            const label = type === 'home' ? '屋企' : '公司';
-
             if (!raw) {
                 setSavedPlace(type);
                 return;
             }
-
             const place = JSON.parse(raw);
+            currentRoutingProfile = 'driving-traffic';
             previewDestination(place.name, place.coords);
         }
 
@@ -918,7 +971,7 @@
             updateFindCarButtonState();
 
             if (navigator.vibrate) navigator.vibrate(80);
-            speakCantonese('已為你記低當前泊車位置。');
+            speakCantonese('已為你記低當前泊車位置。', true);
             alert(`✅ 已記錄車位！\n時間：${parkingData.timestamp}`);
         }
 
@@ -959,7 +1012,7 @@
                 parkedCarMarker = null;
             }
             updateFindCarButtonState();
-            speakCantonese('已清除泊車位置紀錄。');
+            speakCantonese('已清除泊車位置紀錄。', true);
         }
 
         function updateFindCarButtonState() {
@@ -994,16 +1047,19 @@
         dMarkerEl.className = 'gta-dest-marker';
         const destMarker = new mapboxgl.Marker({ element: dMarkerEl, anchor: 'center' }).setLngLat(targetCoord).addTo(map);
 
-        // ---------------- 語音播報 ----------------
+        // ---------------- iOS 穩定持續語音播報引擎 ----------------
         function unlockAudioEngine() {
-            if (!('speechSynthesis' in window) || isAudioUnlocked) return;
-            const dummy = new SpeechSynthesisUtterance('');
-            dummy.volume = 0;
-            window.speechSynthesis.speak(dummy);
-            isAudioUnlocked = true;
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.getVoices();
+            if (!isAudioUnlocked) {
+                const dummy = new SpeechSynthesisUtterance('');
+                dummy.volume = 0;
+                window.speechSynthesis.speak(dummy);
+                isAudioUnlocked = true;
+            }
         }
-        window.addEventListener('touchstart', unlockAudioEngine, { once: true });
-        window.addEventListener('click', unlockAudioEngine, { once: true });
+        window.addEventListener('touchstart', unlockAudioEngine, { passive: true });
+        window.addEventListener('click', unlockAudioEngine, { passive: true });
 
         function toggleVoice() {
             isVoiceEnabled = !isVoiceEnabled;
@@ -1011,7 +1067,7 @@
             if (isVoiceEnabled) {
                 btn.classList.add('active');
                 btn.innerText = '🔊 語音';
-                speakCantonese('語音導航已開啟');
+                speakCantonese('語音導航已開啟', true);
             } else {
                 btn.classList.remove('active');
                 btn.innerText = '🔇 靜音';
@@ -1019,22 +1075,24 @@
             }
         }
 
-        function speakCantonese(text) {
-            if (!isVoiceEnabled || !('speechSynthesis' in window)) return;
-            if (text === lastSpokenInstruction) return;
+        function speakCantonese(text, force = false) {
+            if (!isVoiceEnabled || !('speechSynthesis' in window) || !text) return;
 
-            lastSpokenInstruction = text;
-            window.speechSynthesis.cancel();
+            try {
+                window.speechSynthesis.cancel();
+                window.speechSynthesis.resume();
 
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'zh-HK';
-            utterance.rate = 1.0;
+                const cleanText = text.replace(/\//g, '、');
+                const utterance = new SpeechSynthesisUtterance(cleanText);
+                utterance.lang = 'zh-HK';
+                utterance.rate = 1.05;
 
-            const voices = window.speechSynthesis.getVoices();
-            const hkVoice = voices.find(v => v.lang === 'zh-HK' || v.lang === 'yue-Hant-HK' || v.name.includes('Hong Kong') || v.name.includes('Sin-ji'));
-            if (hkVoice) utterance.voice = hkVoice;
+                const voices = window.speechSynthesis.getVoices();
+                const hkVoice = voices.find(v => v.lang === 'zh-HK' || v.lang === 'yue-Hant-HK' || v.name.includes('Hong Kong') || v.name.includes('Sin-ji'));
+                if (hkVoice) utterance.voice = hkVoice;
 
-            window.speechSynthesis.speak(utterance);
+                window.speechSynthesis.speak(utterance);
+            } catch (e) {}
         }
 
         function checkSpeedSpots(pos) {
@@ -1063,7 +1121,7 @@
                 if (lastAlertedSpot !== nearbySpot.spot.name) {
                     lastAlertedSpot = nearbySpot.spot.name;
                     const spotType = isCamera ? '測速相機' : '流動激光槍出沒黑點';
-                    speakCantonese(`請減速，前方 ${nearbySpot.dist} 米有${spotType}，限速 ${nearbySpot.spot.limit}`);
+                    speakCantonese(`請減速，前方 ${nearbySpot.dist} 米有${spotType}，限速 ${nearbySpot.spot.limit}`, true);
                 }
             } else {
                 navBanner.classList.remove('danger-camera', 'danger-laser');
@@ -1081,23 +1139,198 @@
         setInterval(updateETADisplay, 15000);
 
         function getTurnIcon(maneuver) {
-            const type = maneuver.type;
+            if (!maneuver) return '⬆';
+            const type = maneuver.type || '';
             const modifier = maneuver.modifier || '';
             if (type === 'roundabout' || type === 'rotary') return '🔄';
-            if (modifier.includes('right')) return '↗';
-            if (modifier.includes('left')) return '↖';
             if (modifier.includes('sharp right')) return '⤴';
             if (modifier.includes('sharp left')) return '⤵';
+            if (modifier.includes('right')) return '↗';
+            if (modifier.includes('left')) return '↖';
             if (modifier.includes('uturn')) return '↩';
             return '⬆';
         }
 
-        // ---------------- 路線規劃 ----------------
-        async function getRoute(start, end) {
+        // 解析每一條車道的真實方向箭頭
+        function getLaneArrowSymbol(lane, stepManeuver) {
+            if (!lane.valid) return '✕';
+            const inds = lane.indications || [];
+            if (inds.includes('sharp right')) return '⤴';
+            if (inds.includes('sharp left')) return '⤵';
+            if (inds.includes('right') || inds.includes('slight right')) return '↗';
+            if (inds.includes('left') || inds.includes('slight left')) return '↖';
+            if (inds.includes('uturn')) return '↩';
+            if (inds.includes('straight')) return '⬆';
+            return getTurnIcon(stepManeuver);
+        }
+
+        // 判斷是否為高速公路或高車速狀態 (決定是否提早至 500米 報路)
+        function isHighSpeedOrHighway(step) {
+            if (currentSpeedKmh >= 60) return true;
+            if (!step) return false;
+            const textToCheck = `${step.name || ''} ${step.ref || ''} ${(step.maneuver && step.maneuver.instruction) || ''}`;
+            return /公路|繞道|幹線|高速|隧道|走廊|大橋|Highway|Expressway|Bypass|Tunnel/i.test(textToCheck);
+        }
+
+        // ---------------- 即時逐段推進與偏航自動重算 ----------------
+        function renderStepUI(step, distToTurnMeters) {
+            if (!step) return;
             const isWalking = currentRoutingProfile === 'walking';
+            const instruction = step.maneuver.instruction || (isWalking ? '沿路線步行' : '沿路線行駛');
+
+            document.getElementById('road-text').innerText = (isWalking ? '🚶 ' : '') + instruction;
+            document.getElementById('turn-icon').innerText = getTurnIcon(step.maneuver);
+
+            if (distToTurnMeters !== undefined && distToTurnMeters !== null) {
+                const distStr = distToTurnMeters >= 1000 
+                    ? `${(distToTurnMeters / 1000).toFixed(1)} KM` 
+                    : `${Math.max(10, Math.round(distToTurnMeters / 10) * 10)} M`;
+                document.getElementById('step-dist-text').innerText = distStr;
+            }
+
+            const signBox = document.getElementById('sign-box');
+            const signText = document.getElementById('sign-text');
+            if (!isWalking && step.bannerInstructions && step.bannerInstructions.length > 0) {
+                const primary = step.bannerInstructions[0].primary;
+                signText.innerText = primary.text;
+                signBox.style.display = 'block';
+            } else if (!isWalking && step.name) {
+                signText.innerText = step.ref ? `${step.ref} / ${step.name}` : step.name;
+                signBox.style.display = 'block';
+            } else {
+                signBox.style.display = 'none';
+            }
+
+            // 渲染強化版高對比螢光綠車道指引
+            const laneContainer = document.getElementById('lane-container');
+            laneContainer.innerHTML = '';
+            
+            // 尋找該 Step 內包含車道資訊的 intersection
+            let laneIntersection = null;
+            if (!isWalking && step.intersections) {
+                laneIntersection = step.intersections.find(inter => inter.lanes && inter.lanes.length > 1);
+            }
+
+            if (laneIntersection && laneIntersection.lanes) {
+                laneContainer.style.display = 'flex';
+                laneIntersection.lanes.forEach(lane => {
+                    const box = document.createElement('div');
+                    box.className = 'lane-box' + (lane.valid ? ' valid' : '');
+                    box.innerText = getLaneArrowSymbol(lane, step.maneuver);
+                    laneContainer.appendChild(box);
+                });
+            } else {
+                laneContainer.style.display = 'none';
+            }
+        }
+
+        function updateActiveNavigationProgress(pos) {
+            if (!isNavigating || isRerouting || currentRouteCoords.length < 2) return;
+
+            const pt = turf.point(pos);
+
+            // 1. 檢查是否已到達終點 (小於 35 米)
+            const distToDestMeters = turf.distance(pt, turf.point(targetCoord), { units: 'kilometers' }) * 1000;
+            if (distToDestMeters < 35) {
+                speakCantonese('你已到達目的地，導航結束。', true);
+                stopNavigation();
+                return;
+            }
+
+            // 2. 偏航檢測：放寬至 65 米 (防止天橋底或高樓 GPS 飄移誤判)，冷卻時間 10 秒
+            try {
+                const routeLine = turf.lineString(currentRouteCoords);
+                const offRouteDistMeters = turf.pointToLineDistance(pt, routeLine, { units: 'kilometers' }) * 1000;
+                const now = Date.now();
+
+                if (offRouteDistMeters > 65 && (now - lastRerouteTime > 10000)) {
+                    isRerouting = true;
+                    lastRerouteTime = now;
+                    const banner = document.getElementById('nav-banner');
+                    banner.classList.add('rerouting-alert');
+                    document.getElementById('road-text').innerText = '🔄 已偏離路線，正在重新規劃...';
+                    speakCantonese('你已偏離路線，正在為你重新規劃。', true);
+
+                    getRoute(pos, targetCoord, true).finally(() => {
+                        isRerouting = false;
+                        setTimeout(() => banner.classList.remove('rerouting-alert'), 1500);
+                    });
+                    return;
+                }
+            } catch (e) {}
+
+            // 3. 檢查並推進至下一條幹線 / 路口
+            if (!routeSteps || routeSteps.length === 0) return;
+            if (currentStepIndex >= routeSteps.length) currentStepIndex = routeSteps.length - 1;
+
+            let activeStep = routeSteps[currentStepIndex];
+            let maneuverCoord = activeStep.maneuver.location;
+            let distToManeuver = turf.distance(pt, turf.point(maneuverCoord), { units: 'kilometers' }) * 1000;
+
+            // 高速時放寬過彎觸發半徑至 45 米，市區慢速維持 35 米
+            const stepAdvanceRadius = currentSpeedKmh >= 60 ? 45 : 35;
+
+            if (distToManeuver < stepAdvanceRadius && currentStepIndex < routeSteps.length - 1) {
+                currentStepIndex++;
+                stepVoiceStage = 0;
+                activeStep = routeSteps[currentStepIndex];
+                maneuverCoord = activeStep.maneuver.location;
+                distToManeuver = turf.distance(pt, turf.point(maneuverCoord), { units: 'kilometers' }) * 1000;
+            }
+
+            renderStepUI(activeStep, distToManeuver);
+
+            // 更新總剩餘里程與時間估算
+            let remainingDistMeters = distToManeuver;
+            let remainingDurSec = (distToManeuver / Math.max(1, activeStep.distance || 1)) * (activeStep.duration || 0);
+            for (let i = currentStepIndex + 1; i < routeSteps.length; i++) {
+                remainingDistMeters += (routeSteps[i].distance || 0);
+                remainingDurSec += (routeSteps[i].duration || 0);
+            }
+            document.getElementById('dist-text').innerText = `${(remainingDistMeters / 1000).toFixed(1)} KM`;
+            currentDurationSec = remainingDurSec;
+            document.getElementById('time-remaining').innerText = `${Math.max(1, Math.round(remainingDurSec / 60))} MINS`;
+            updateETADisplay();
+
+            // 4. 智能車速語音播報（高速/幹線提早 500米 預警，一般道路 250米 預警）
+            const instruction = activeStep.maneuver.instruction || '沿路線行駛';
+            const isFastRoad = isHighSpeedOrHighway(activeStep);
+            const midAlertTriggerDist = isFastRoad ? 530 : 260;
+            const finalAlertTriggerDist = isFastRoad ? 120 : 70;
+
+            if (stepVoiceStage === 0) {
+                stepVoiceStage = 1;
+                if (distToManeuver > 600) {
+                    const dStr = distToManeuver >= 1000 
+                        ? `${(distToManeuver / 1000).toFixed(1)} 公里` 
+                        : `${Math.round(distToManeuver / 50) * 50} 米`;
+                    speakCantonese(`繼續行駛 ${dStr} 後，${instruction}`);
+                } else if (distToManeuver > finalAlertTriggerDist) {
+                    const roundedM = Math.round(distToManeuver / 50) * 50;
+                    speakCantonese(`前方 ${roundedM} 米，${instruction}`);
+                    stepVoiceStage = 2; // 若進入路段時已經在 500米 內，直接視為完成中段預警
+                } else {
+                    speakCantonese(`請即${instruction}`);
+                    stepVoiceStage = 3;
+                }
+            } else if (stepVoiceStage === 1 && distToManeuver <= midAlertTriggerDist && distToManeuver > finalAlertTriggerDist + 30) {
+                stepVoiceStage = 2;
+                const alertMeters = isFastRoad ? 500 : 200;
+                speakCantonese(`前方 ${alertMeters} 米，${instruction}`);
+            } else if (stepVoiceStage < 3 && distToManeuver <= finalAlertTriggerDist) {
+                stepVoiceStage = 3;
+                speakCantonese(`請即${instruction}`);
+            }
+        }
+
+        // ---------------- 路線規劃 API ----------------
+        async function getRoute(start, end, isRerouteCall = false) {
+            const isWalking = currentRoutingProfile === 'walking';
+            const bearingParam = (!isWalking && currentSpeedKmh > 10) ? `&bearings=${currentHeading},60;` : '';
+
             const apiUrl = isWalking
                 ? `https://api.mapbox.com/directions/v5/mapbox/walking/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&language=zh-Hant&access_token=${mapboxgl.accessToken}`
-                : `https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&banner_instructions=true&geometries=geojson&language=zh-Hant&access_token=${mapboxgl.accessToken}`;
+                : `https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&banner_instructions=true&geometries=geojson&language=zh-Hant${bearingParam}&access_token=${mapboxgl.accessToken}`;
 
             const fallbackUrl = `https://api.mapbox.com/directions/v5/mapbox/driving/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&banner_instructions=true&geometries=geojson&language=zh-Hant&access_token=${mapboxgl.accessToken}`;
 
@@ -1121,8 +1354,10 @@
             if (!data || !data.routes || !data.routes.length) return;
 
             const route = data.routes[0];
-            const coords = route.geometry.coordinates;
-            const steps = route.legs[0].steps;
+            currentRouteCoords = route.geometry.coordinates;
+            routeSteps = route.legs[0].steps || [];
+            currentStepIndex = routeSteps.length > 1 ? 1 : 0;
+            stepVoiceStage = 0;
 
             const distKm = (route.distance / 1000).toFixed(1);
             document.getElementById('dist-text').innerText = `${distKm} KM`;
@@ -1141,44 +1376,16 @@
                 document.getElementById('delay-badge').style.display = 'none';
             }
 
-            if (steps && steps.length > 0) {
-                const activeStep = steps.length > 1 ? steps[1] : steps[0];
-                const instruction = activeStep.maneuver.instruction || (isWalking ? '沿路線步行' : '沿路線行駛');
-                
-                document.getElementById('road-text').innerText = (isWalking ? '🚶 ' : '') + instruction;
-                document.getElementById('turn-icon').innerText = getTurnIcon(activeStep.maneuver);
-                
-                speakCantonese(instruction);
-
-                const signBox = document.getElementById('sign-box');
-                const signText = document.getElementById('sign-text');
-                if (!isWalking && activeStep.bannerInstructions && activeStep.bannerInstructions.length > 0) {
-                    signText.innerText = activeStep.bannerInstructions[0].primary.text;
-                    signBox.style.display = 'block';
-                } else {
-                    signBox.style.display = 'none';
-                }
-
-                const laneContainer = document.getElementById('lane-container');
-                laneContainer.innerHTML = '';
-                const intersection = activeStep.intersections ? activeStep.intersections[0] : null;
-
-                if (!isWalking && intersection && intersection.lanes && intersection.lanes.length > 1) {
-                    laneContainer.style.display = 'flex';
-                    intersection.lanes.forEach(lane => {
-                        const box = document.createElement('div');
-                        box.className = 'lane-box' + (lane.valid ? ' valid' : '');
-                        box.innerText = lane.valid ? '↑' : '·';
-                        laneContainer.appendChild(box);
-                    });
-                } else {
-                    laneContainer.style.display = 'none';
-                }
+            if (routeSteps.length > 0) {
+                const firstActiveStep = routeSteps[currentStepIndex];
+                const distToFirst = turf.distance(turf.point(start), turf.point(firstActiveStep.maneuver.location), { units: 'kilometers' }) * 1000;
+                renderStepUI(firstActiveStep, distToFirst);
+                updateActiveNavigationProgress(start);
             }
 
             const geojson = {
                 type: 'Feature',
-                geometry: { type: 'LineString', coordinates: coords }
+                geometry: { type: 'LineString', coordinates: currentRouteCoords }
             };
 
             if (map.getSource('route')) {
@@ -1298,7 +1505,7 @@
             }
         }
 
-        // ---------------- GPS 監控與迷霧實時驅散 ----------------
+        // ---------------- GPS 監控、迷霧解鎖與即時導航推進 ----------------
         if ('geolocation' in navigator) {
             navigator.geolocation.watchPosition(
                 (pos) => {
@@ -1311,14 +1518,25 @@
                     if (currentSpeedKmh > 5 && pos.coords.heading !== null && !isNaN(pos.coords.heading)) {
                         currentHeading = Math.round(pos.coords.heading);
                         if (isHeadingLocked) {
-                            map.easeTo({ center: currentCoord, bearing: currentHeading, duration: 400 });
+                            map.easeTo({
+                                center: currentCoord,
+                                bearing: currentHeading,
+                                pitch: 65,
+                                padding: { top: Math.round(window.innerHeight * 0.45), bottom: 0, left: 0, right: 0 },
+                                duration: 350
+                            });
+                            pMarkerEl.style.transform = 'rotate(0deg)';
+                            document.getElementById('heading-source').innerText = `LOCKED (${currentHeading}°)`;
                         } else {
                             pMarkerEl.style.transform = `rotate(${currentHeading}deg)`;
                         }
+                    } else if (isHeadingLocked) {
+                        map.easeTo({ center: currentCoord, duration: 300 });
                     }
 
                     checkSpeedSpots(currentCoord);
-                    updateFog(currentCoord); // 移動時自動開霧
+                    updateFog(currentCoord);
+                    updateActiveNavigationProgress(currentCoord);
                 },
                 null,
                 { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
@@ -1326,7 +1544,7 @@
         }
 
         map.on('load', () => {
-            initFogOfWar();      // 地圖載入完成後初始化戰爭迷霧
+            initFogOfWar();
             renderPoiMarkers();
             
             const raw = localStorage.getItem('gta_parked_car');
@@ -1337,7 +1555,6 @@
             updateFindCarButtonState();
         });
 
-        // 點擊地圖選擇目的地時彈出預覽
         map.on('click', (e) => {
             if (isNavigating) return;
             currentRoutingProfile = 'driving-traffic';
