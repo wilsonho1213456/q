@@ -2,7 +2,7 @@
 <html lang="zh-HK">
 <head>
     <meta charset="utf-8">
-    <title>GTA V Navigation System v32</title>
+    <title>GTA V Navigation System v33</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -64,6 +64,10 @@
         .nav-banner.rerouting-alert {
             border-left-color: #38bdf8 !important;
             box-shadow: 0 0 25px rgba(56, 189, 248, 0.8) !important;
+        }
+        .nav-banner.tunnel-mode {
+            border-left-color: #f59e0b !important;
+            box-shadow: 0 0 25px rgba(245, 158, 11, 0.6) !important;
         }
 
         .highway-sign-box { display: none; margin-bottom: 2px; }
@@ -157,7 +161,6 @@
             color: rgba(255, 255, 255, 0.32);
             transition: all 0.2s ease;
         }
-
         .lane-box svg { width: 20px; height: 24px; }
 
         .lane-box.valid {
@@ -397,7 +400,7 @@
         .gov-search-input::placeholder { color: #94a3b8; }
         .gov-search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 14px; color: #b026ff; pointer-events: none; }
         
-        /* 搜尋框右側：儲存清單快捷按鈕 (取代舊歷史掣) */
+        /* 儲存清單快捷按鈕 */
         .search-saved-btn {
             position: absolute;
             right: 8px;
@@ -444,7 +447,6 @@
         .gov-title { font-size: 14px; font-weight: 700; color: #ffffff; letter-spacing: 0.5px; }
         .gov-desc { font-size: 11px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        /* 項目按鈕樣式 */
         .add-fav-btn {
             background: rgba(234, 179, 8, 0.18);
             border: 1px solid #eab308;
@@ -631,7 +633,7 @@
         <button id="fog-toggle-btn" class="map-toggle-btn" onclick="toggleFogManual()">🌫️ 迷霧 OFF</button>
         <button id="parking-toggle-btn" class="map-toggle-btn" onclick="toggleParkingManual()">🅿️ 停車場 OFF</button>
         <button id="gas-toggle-btn" class="map-toggle-btn" onclick="toggleGasManual()">⛽ 加油站 OFF</button>
-        <div class="version-badge">VER 32.0 · SAVED LIST</div>
+        <div class="version-badge">VER 33.0 · WAKE & DR</div>
     </div>
 
     <!-- 正下方：捷徑列 + 香港搜尋盒 -->
@@ -675,7 +677,6 @@
                 onfocus="handleSearchFocus(this)"
             />
             <button type="button" id="search-clear-btn" class="search-clear-btn" onclick="clearSearchInput()">✕</button>
-            <!-- 依要求：將原本歷史掣正式替換為「⭐ 儲存」按鈕 -->
             <button type="button" class="search-saved-btn" onclick="toggleSavedList(event)">⭐ 儲存</button>
             <ul id="gov-suggestions" class="gov-suggestions"></ul>
         </div>
@@ -763,14 +764,21 @@
         let exploredPoints = [];
         const EXPLORE_RADIUS_KM = 0.25;
 
-        // 預載歷史紀錄
+        // ==================== 螢幕常亮 (Screen Wake Lock) 變數 ====================
+        let wakeLockSentinel = null;
+
+        // ==================== 隧道航位推算 (Dead Reckoning) 變數 ====================
+        let lastGpsTimestamp = Date.now();
+        let isTunnelDeadReckoning = false;
+        let deadReckoningTimer = null;
+        let lastKnownSpeedMs = 0;
+
         let memoryRecentFallback = [
             { name: '旺角朗豪坊', coords: [114.1687, 22.3193], address: '九龍旺角亞皆老街8號' },
             { name: '尖沙咀海港城', coords: [114.1685, 22.2982], address: '九龍尖沙咀廣東道3-27號' },
             { name: '九龍塘又一城', coords: [114.1751, 22.3369], address: '九龍九龍塘達之路80號' }
         ];
 
-        // 預載自訂儲存地點
         let memorySavedLocations = [
             { name: '旺角朗豪坊', coords: [114.1687, 22.3193], address: '九龍旺角亞皆老街8號' },
             { name: '香港國際機場', coords: [113.9145, 22.3080], address: '大嶼山赤鱲角暢航路1號' }
@@ -821,7 +829,7 @@
             { type: 'camera', icon: 'camera', name: '西九龍走廊 (櫻桃街段)', limit: 70, coords: [114.1620, 22.3190] },
             { type: 'camera', icon: 'camera', name: '東區走廊 (北角段東行)', limit: 70, coords: [114.1980, 22.2930] },
             { type: 'camera', icon: 'camera', name: '東區走廊 (太古城段西行)', limit: 70, coords: [114.2190, 22.2870] },
-            { type: 'camera', icon: 'camera', name: '青葵公路 (美孚南行)', limit: 80, coords: [114.1350, 22.3330] },
+            { type: 'camera', icon: '青葵公路 (美孚南行)', limit: 80, coords: [114.1350, 22.3330] },
             { type: 'camera', icon: 'camera', name: '大老山公路 (石門段)', limit: 80, coords: [114.2110, 22.3890] },
             { type: 'camera', icon: 'camera', name: '加士居道天橋 (西行)', limit: 50, coords: [114.1720, 22.3080] },
             { type: 'camera', icon: 'camera', name: '呈祥道 (清麗苑西行)', limit: 70, coords: [114.1430, 22.3400] }
@@ -898,7 +906,79 @@
             );
         }
 
-        // ==================== 儲存清單 (Saved Locations) 管理 ====================
+        // ==================== 螢幕常亮控制（Wake Lock API） ====================
+        async function requestScreenWakeLock() {
+            try {
+                if ('wakeLock' in navigator && !wakeLockSentinel) {
+                    wakeLockSentinel = await navigator.wakeLock.request('screen');
+                    wakeLockSentinel.addEventListener('release', () => {
+                        wakeLockSentinel = null;
+                    });
+                }
+            } catch (err) {
+                console.warn('Wake Lock 啟動失敗或設備不支援:', err);
+            }
+        }
+
+        function releaseScreenWakeLock() {
+            if (wakeLockSentinel) {
+                wakeLockSentinel.release().catch(() => {});
+                wakeLockSentinel = null;
+            }
+        }
+
+        // 當使用者切換分頁再返回時重新申請鎖定
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && isNavigating) {
+                requestScreenWakeLock();
+            }
+        });
+
+        // ==================== 隧道航位推算（Dead Reckoning 引擎） ====================
+        function initDeadReckoningWatcher() {
+            if (deadReckoningTimer) clearInterval(deadReckoningTimer);
+            deadReckoningTimer = setInterval(() => {
+                if (!isNavigating) return;
+
+                const timeSinceLastGps = Date.now() - lastGpsTimestamp;
+
+                // 失去 GPS 訊號超過 2.5 秒且車速大於 10 km/h，判定進入隧道/地下路段
+                if (timeSinceLastGps > 2500 && lastKnownSpeedMs > 2.5) {
+                    if (!isTunnelDeadReckoning) {
+                        isTunnelDeadReckoning = true;
+                        document.getElementById('nav-banner').classList.add('tunnel-mode');
+                        document.getElementById('heading-source').innerText = 'TUNNEL (DR SIM)';
+                    }
+                    simulateDeadReckoningAdvance();
+                } else if (timeSinceLastGps <= 2500 && isTunnelDeadReckoning) {
+                    // 重新獲得 GPS 訊號，自動退出推算模式
+                    isTunnelDeadReckoning = false;
+                    document.getElementById('nav-banner').classList.remove('tunnel-mode');
+                }
+            }, 1000);
+        }
+
+        function simulateDeadReckoningAdvance() {
+            if (currentRouteCoords.length < 2) return;
+
+            const routeLine = turf.lineString(currentRouteCoords);
+            const snapped = turf.nearestPointOnLine(routeLine, turf.point(currentCoord));
+            
+            // 沿規劃路線平滑向前推進 (車速 m/s 轉成 km)
+            const advanceDistanceKm = (lastKnownSpeedMs * 1.0) / 1000;
+            const newPt = turf.along(routeLine, snapped.properties.location + advanceDistanceKm, { units: 'kilometers' });
+            
+            currentCoord = newPt.geometry.coordinates;
+            playerMarker.setLngLat(currentCoord);
+
+            if (isHeadingLocked) {
+                map.easeTo({ center: currentCoord, duration: 900, easing: (t) => t });
+            }
+
+            updateActiveNavigationProgress(currentCoord);
+        }
+
+        // ==================== 儲存清單 (Saved Locations) ====================
         function getSavedLocations() {
             try {
                 const raw = localStorage.getItem('gta_saved_locations');
@@ -914,10 +994,7 @@
         }
 
         function saveToFavorites(name, coords, address, event) {
-            if (event) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
+            if (event) { event.preventDefault(); event.stopPropagation(); }
             if (!name || !coords || isNaN(coords[0]) || isNaN(coords[1])) return;
 
             let favs = getSavedLocations().slice();
@@ -931,7 +1008,6 @@
             if (navigator.vibrate) navigator.vibrate(50);
             speakCantonese(`已儲存地點 ${name}`);
 
-            // 即時更新按鈕外觀為「已儲存」
             if (event && event.target) {
                 event.target.innerText = '✅ 已儲存';
                 event.target.classList.add('saved');
@@ -939,17 +1015,14 @@
         }
 
         function removeFromFavorites(name, event) {
-            if (event) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
+            if (event) { event.preventDefault(); event.stopPropagation(); }
             let favs = getSavedLocations().filter(item => item.name !== name);
             memorySavedLocations = favs;
             try { localStorage.setItem('gta_saved_locations', JSON.stringify(favs)); } catch (e) {}
             renderSavedListDropdown();
         }
 
-        // ==================== 歷史紀錄 (Recent History) 管理 ====================
+        // ==================== 歷史紀錄 (Recent History) ====================
         function getRecentDestinations() {
             try {
                 const raw = localStorage.getItem('gta_recent_destinations');
@@ -971,9 +1044,7 @@
             recents.unshift({ name, coords, address: address || '最近導航目的地', timestamp: Date.now() });
             if (recents.length > 10) recents = recents.slice(0, 10);
             memoryRecentFallback = recents;
-            try {
-                localStorage.setItem('gta_recent_destinations', JSON.stringify(recents));
-            } catch (e) {}
+            try { localStorage.setItem('gta_recent_destinations', JSON.stringify(recents)); } catch (e) {}
         }
 
         function clearRecentDestinations(e) {
@@ -983,7 +1054,6 @@
             document.getElementById('gov-suggestions').style.display = 'none';
         }
 
-        // ==================== 點擊「⭐ 儲存」按鈕：彈出儲存清單 ====================
         function toggleSavedList(e) {
             if (e) { e.preventDefault(); e.stopPropagation(); }
             const list = document.getElementById('gov-suggestions');
@@ -1044,7 +1114,6 @@
             });
         }
 
-        // ==================== 點擊「🕒 最近去過」按鈕：彈出歷史紀錄 (附 ➕ 儲存 鍵) ====================
         function toggleHistoryList(e) {
             if (e) { e.preventDefault(); e.stopPropagation(); }
             const list = document.getElementById('gov-suggestions');
@@ -1062,7 +1131,6 @@
             list.style.display = 'block';
         }
 
-        // 渲染選單：包含「➕ 儲存」按鈕
         function renderSuggestions(recentsList, apiResultsList, queryText, isLoadingApi) {
             const list = document.getElementById('gov-suggestions');
             list.innerHTML = '';
@@ -1077,7 +1145,6 @@
 
             const currentFavs = getSavedLocations();
 
-            // 1. 最近導航歷史紀錄 (附帶 ➕ 儲存 掣)
             if (hasRecents) {
                 const headerLi = document.createElement('li');
                 headerLi.className = 'gov-item';
@@ -1123,7 +1190,6 @@
                 });
             }
 
-            // 2. 聯網搜尋結果
             if (hasApi) {
                 if (hasRecents) {
                     const apiHeaderLi = document.createElement('li');
@@ -1235,7 +1301,6 @@
             }
         });
 
-        // 隧道費分析
         function analyzeRouteTunnelsAndTolls(route) {
             const steps = (route.legs && route.legs[0] && route.legs[0].steps) || [];
             const passedTunnels = [];
@@ -1979,6 +2044,8 @@
 
         function confirmStartNavigation() {
             unlockAudioEngine();
+            requestScreenWakeLock(); // 啟動螢幕常亮防止休眠
+
             document.getElementById('dest-confirm-modal').style.display = 'none';
 
             saveRecentDestination(pendingDestName, pendingDestCoord, '最近導航終點');
@@ -2034,9 +2101,13 @@
         function stopNavigation() {
             isNavigating = false;
             isInRoundaboutMode = false;
+            isTunnelDeadReckoning = false;
+            releaseScreenWakeLock(); // 釋放螢幕鎖定，回復省電休眠
+
             routeSteps = [];
             currentRouteCoords = [];
             document.getElementById('nav-cancel-btn').style.display = 'none';
+            document.getElementById('nav-banner').classList.remove('tunnel-mode');
             document.getElementById('search-container').classList.remove('nav-active-hidden');
             document.getElementById('map-toggles-group').classList.remove('nav-active-hidden');
 
@@ -2494,30 +2565,33 @@
                 return;
             }
 
-            try {
-                const offRouteDistMeters = turf.pointToLineDistance(pt, routeLine, { units: 'kilometers' }) * 1000;
-                const now = Date.now();
+            // 僅在非推算狀態下偵測偏航
+            if (!isTunnelDeadReckoning) {
+                try {
+                    const offRouteDistMeters = turf.pointToLineDistance(pt, routeLine, { units: 'kilometers' }) * 1000;
+                    const now = Date.now();
 
-                if (offRouteDistMeters > 65 && (now - lastRerouteTime > 10000)) {
-                    isRerouting = true;
-                    lastRerouteTime = now;
-                    const banner = document.getElementById('nav-banner');
-                    banner.classList.add('rerouting-alert');
-                    document.getElementById('road-text').innerText = '🔄 已偏離路線，正在重新規劃...';
-                    speakCantonese('你已偏離路線，正在為你重新規劃。', true);
+                    if (offRouteDistMeters > 65 && (now - lastRerouteTime > 10000)) {
+                        isRerouting = true;
+                        lastRerouteTime = now;
+                        const banner = document.getElementById('nav-banner');
+                        banner.classList.add('rerouting-alert');
+                        document.getElementById('road-text').innerText = '🔄 已偏離路線，正在重新規劃...';
+                        speakCantonese('你已偏離路線，正在為你重新規劃。', true);
 
-                    fetchMultiAlternativeRoutes(pos, targetCoord).then(routes => {
-                        if (routes && routes.length > 0) {
-                            fetchedRoutesList = routes;
-                            applySelectedRouteToMap(0);
-                        }
-                    }).finally(() => {
-                        isRerouting = false;
-                        setTimeout(() => banner.classList.remove('rerouting-alert'), 1500);
-                    });
-                    return;
-                }
-            } catch (e) {}
+                        fetchMultiAlternativeRoutes(pos, targetCoord).then(routes => {
+                            if (routes && routes.length > 0) {
+                                fetchedRoutesList = routes;
+                                applySelectedRouteToMap(0);
+                            }
+                        }).finally(() => {
+                            isRerouting = false;
+                            setTimeout(() => banner.classList.remove('rerouting-alert'), 1500);
+                        });
+                        return;
+                    }
+                } catch (e) {}
+            }
 
             let remainingKm = 0;
             try {
@@ -2707,15 +2781,19 @@
             }
         }
 
-        // GPS 實時監聽
+        // ==================== GPS 實時監聽 (含心跳監控與速度紀錄) ====================
         if ('geolocation' in navigator) {
             navigator.geolocation.watchPosition(
                 (pos) => {
+                    lastGpsTimestamp = Date.now(); // 更新 GPS 心跳
+
                     const coords = pos.coords;
                     currentCoord = [coords.longitude, coords.latitude];
                     try { localStorage.setItem('gta_last_known_pos', JSON.stringify(currentCoord)); } catch (e) {}
                     playerMarker.setLngLat(currentCoord);
-                    currentSpeedKmh = (pos.coords.speed && pos.coords.speed > 0) ? Math.round(pos.coords.speed * 3.6) : 0;
+
+                    lastKnownSpeedMs = (coords.speed && coords.speed > 0) ? coords.speed : 0;
+                    currentSpeedKmh = Math.round(lastKnownSpeedMs * 3.6);
                     document.getElementById('speed-text').innerText = `${currentSpeedKmh} KM/H`;
 
                     if (currentSpeedKmh > 5 && pos.coords.heading !== null && !isNaN(pos.coords.heading)) {
@@ -2758,6 +2836,7 @@
             renderCameraMarkers();
             initGovCarparksFromAPI();
             initGasStations();
+            initDeadReckoningWatcher(); // 啟動隧道推算監控
             fetchHKSpecialTrafficNews();
             setInterval(fetchHKSpecialTrafficNews, 180000);
             
@@ -2771,7 +2850,6 @@
             updateFindCarButtonState();
         });
 
-        // 點擊地圖非標記處直接觸發導航預覽
         map.on('click', (e) => {
             if (isNavigating) return;
             if (e.originalEvent && e.originalEvent.target && e.originalEvent.target.closest('.mapboxgl-marker, .mapboxgl-popup')) {
