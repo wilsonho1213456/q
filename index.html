@@ -2,10 +2,9 @@
 <html lang="zh-HK">
 <head>
     <meta charset="utf-8">
-    <title>GTA V Navigation System v31</title>
+    <title>GTA V Navigation System v32</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <!-- 強制禁止瀏覽器快取舊版 HTML -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -158,6 +157,7 @@
             color: rgba(255, 255, 255, 0.32);
             transition: all 0.2s ease;
         }
+
         .lane-box svg { width: 20px; height: 24px; }
 
         .lane-box.valid {
@@ -373,7 +373,7 @@
         }
         .quick-chip:active { transform: scale(0.96); border-color: #b026ff; color: #ffffff; }
 
-        .chip-history { border-color: #d946ef !important; color: #ffffff !important; background: rgba(176, 38, 255, 0.45) !important; box-shadow: 0 0 10px rgba(176, 38, 255, 0.5) !important; }
+        .chip-history { border-color: #a855f7 !important; color: #e9d5ff !important; background: rgba(168, 85, 247, 0.25) !important; }
         .chip-park { border-color: #22c55e !important; color: #4ade80 !important; }
         .chip-find-car { border-color: #e879f9 !important; color: #f5d0fe !important; }
         .chip-home { border-color: #38bdf8 !important; color: #bae6fd !important; }
@@ -397,27 +397,27 @@
         .gov-search-input::placeholder { color: #94a3b8; }
         .gov-search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 14px; color: #b026ff; pointer-events: none; }
         
-        /* 搜尋框右側歷史記錄快捷鍵 */
-        .search-history-btn {
+        /* 搜尋框右側：儲存清單快捷按鈕 (取代舊歷史掣) */
+        .search-saved-btn {
             position: absolute;
             right: 8px;
             top: 50%;
             transform: translateY(-50%);
-            background: #b026ff;
-            border: 1px solid #e879f9;
+            background: #eab308;
+            border: 1px solid #facc15;
             border-radius: 4px;
-            color: #ffffff;
+            color: #000000;
             font-size: 11px;
             font-weight: 700;
             padding: 4px 8px;
             cursor: pointer;
             line-height: 1.2;
-            box-shadow: 0 0 8px rgba(176, 38, 255, 0.6);
+            box-shadow: 0 0 10px rgba(234, 179, 8, 0.6);
         }
-        .search-history-btn:active { background: #9333ea; }
+        .search-saved-btn:active { background: #ca8a04; color: #fff; }
 
         .search-clear-btn {
-            display: none; position: absolute; right: 62px; top: 50%; transform: translateY(-50%);
+            display: none; position: absolute; right: 64px; top: 50%; transform: translateY(-50%);
             width: 20px; height: 20px; background: rgba(255, 255, 255, 0.15); border: none; border-radius: 50%;
             color: #cbd5e1; font-size: 11px; cursor: pointer; align-items: center; justify-content: center; line-height: 1; padding: 0;
         }
@@ -429,19 +429,71 @@
             box-shadow: 0 -14px 35px rgba(0, 0, 0, 0.98); max-height: 280px; overflow-y: auto;
             z-index: 999999; list-style: none; margin: 0; padding: 0;
         }
-        .gov-item { padding: 10px 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
+        .gov-item { 
+            padding: 10px 14px; 
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08); 
+            cursor: pointer; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            gap: 8px;
+        }
         .gov-item:last-child { border-bottom: none; }
         .gov-item:active, .gov-item:hover { background: rgba(168, 85, 247, 0.28); }
+        .item-text-group { display: flex; flex-direction: column; gap: 2px; flex-grow: 1; overflow: hidden; }
         .gov-title { font-size: 14px; font-weight: 700; color: #ffffff; letter-spacing: 0.5px; }
         .gov-desc { font-size: 11px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        /* 最近導航歷史標籤 */
+        /* 項目按鈕樣式 */
+        .add-fav-btn {
+            background: rgba(234, 179, 8, 0.18);
+            border: 1px solid #eab308;
+            color: #fde047;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .add-fav-btn:active { background: #eab308; color: #000; }
+        .add-fav-btn.saved {
+            background: rgba(34, 197, 94, 0.18);
+            border-color: #22c55e;
+            color: #86efac;
+        }
+
+        .del-fav-btn {
+            background: rgba(239, 68, 68, 0.18);
+            border: 1px solid #ef4444;
+            color: #fca5a5;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 7px;
+            border-radius: 4px;
+            cursor: pointer;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .del-fav-btn:active { background: #ef4444; color: #fff; }
+
         .recent-badge {
             font-size: 10px;
             font-weight: 700;
             background: rgba(176, 38, 255, 0.25);
             border: 1px solid #b026ff;
             color: #e879f9;
+            padding: 1px 6px;
+            border-radius: 3px;
+        }
+
+        .saved-badge {
+            font-size: 10px;
+            font-weight: 700;
+            background: rgba(234, 179, 8, 0.25);
+            border: 1px solid #eab308;
+            color: #fde047;
             padding: 1px 6px;
             border-radius: 3px;
         }
@@ -579,14 +631,14 @@
         <button id="fog-toggle-btn" class="map-toggle-btn" onclick="toggleFogManual()">🌫️ 迷霧 OFF</button>
         <button id="parking-toggle-btn" class="map-toggle-btn" onclick="toggleParkingManual()">🅿️ 停車場 OFF</button>
         <button id="gas-toggle-btn" class="map-toggle-btn" onclick="toggleGasManual()">⛽ 加油站 OFF</button>
-        <div class="version-badge">VER 31.0 · HISTORY</div>
+        <div class="version-badge">VER 32.0 · SAVED LIST</div>
     </div>
 
     <!-- 正下方：捷徑列 + 香港搜尋盒 -->
     <div id="search-container">
         <div class="quick-places-bar">
-            <!-- 第一粒掣：一鍵免開鍵盤彈出最近 10 個導航歷史紀錄 -->
-            <button class="quick-chip chip-history" onclick="toggleHistoryListBtn(event)">🕒 最近去過</button>
+            <!-- 歷史紀錄快捷鍵 -->
+            <button class="quick-chip chip-history" onclick="toggleHistoryList(event)">🕒 最近去過</button>
             <button class="quick-chip chip-park" onclick="saveCurrentParking()">🅿️ 記低車位</button>
             <button class="quick-chip chip-find-car" id="find-car-btn" onclick="navToCar()" style="display: none;">🚗 搵返架車</button>
 
@@ -617,13 +669,14 @@
                 type="text" 
                 id="gov-search-input" 
                 class="gov-search-input" 
-                placeholder="搜尋地點或按右邊 [🕒 歷史]..." 
+                placeholder="搜尋香港地點或按右邊 [⭐ 儲存]..." 
                 autocomplete="off" 
                 oninput="handleSearchInput(this)"
                 onfocus="handleSearchFocus(this)"
             />
             <button type="button" id="search-clear-btn" class="search-clear-btn" onclick="clearSearchInput()">✕</button>
-            <button type="button" class="search-history-btn" onclick="toggleHistoryListBtn(event)">🕒 歷史</button>
+            <!-- 依要求：將原本歷史掣正式替換為「⭐ 儲存」按鈕 -->
+            <button type="button" class="search-saved-btn" onclick="toggleSavedList(event)">⭐ 儲存</button>
             <ul id="gov-suggestions" class="gov-suggestions"></ul>
         </div>
     </div>
@@ -657,7 +710,6 @@
     <script>
         mapboxgl.accessToken = 'pk.eyJ1Ijoid2lsc29uaG8xMjM0NTY3OCIsImEiOiJjbXZ5dTMwb3Exazc0MnhxNzI5b2IzdW91In0.6MSi7nOdwWNu5se_XE1yZg';
 
-        // 預設身處位置
         let currentCoord = [114.1722, 22.3188];
         try {
             const cachedPos = localStorage.getItem('gta_last_known_pos');
@@ -711,11 +763,16 @@
         let exploredPoints = [];
         const EXPLORE_RADIUS_KM = 0.25;
 
-        // 雙重保險：記憶體 + localStorage 同步儲存最近 10 個導航目的地
+        // 預載歷史紀錄
         let memoryRecentFallback = [
             { name: '旺角朗豪坊', coords: [114.1687, 22.3193], address: '九龍旺角亞皆老街8號' },
             { name: '尖沙咀海港城', coords: [114.1685, 22.2982], address: '九龍尖沙咀廣東道3-27號' },
-            { name: '九龍塘又一城', coords: [114.1751, 22.3369], address: '九龍九龍塘達之路80號' },
+            { name: '九龍塘又一城', coords: [114.1751, 22.3369], address: '九龍九龍塘達之路80號' }
+        ];
+
+        // 預載自訂儲存地點
+        let memorySavedLocations = [
+            { name: '旺角朗豪坊', coords: [114.1687, 22.3193], address: '九龍旺角亞皆老街8號' },
             { name: '香港國際機場', coords: [113.9145, 22.3080], address: '大嶼山赤鱲角暢航路1號' }
         ];
 
@@ -841,7 +898,58 @@
             );
         }
 
-        // ==================== 雙重保險：讀取與寫入最近 10 個導航歷史紀錄 ====================
+        // ==================== 儲存清單 (Saved Locations) 管理 ====================
+        function getSavedLocations() {
+            try {
+                const raw = localStorage.getItem('gta_saved_locations');
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        memorySavedLocations = parsed;
+                        return parsed;
+                    }
+                }
+            } catch (e) {}
+            return memorySavedLocations;
+        }
+
+        function saveToFavorites(name, coords, address, event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            if (!name || !coords || isNaN(coords[0]) || isNaN(coords[1])) return;
+
+            let favs = getSavedLocations().slice();
+            const exists = favs.some(item => item.name === name);
+            if (!exists) {
+                favs.unshift({ name, coords, address: address || '自訂儲存地點', timestamp: Date.now() });
+                memorySavedLocations = favs;
+                try { localStorage.setItem('gta_saved_locations', JSON.stringify(favs)); } catch (e) {}
+            }
+
+            if (navigator.vibrate) navigator.vibrate(50);
+            speakCantonese(`已儲存地點 ${name}`);
+
+            // 即時更新按鈕外觀為「已儲存」
+            if (event && event.target) {
+                event.target.innerText = '✅ 已儲存';
+                event.target.classList.add('saved');
+            }
+        }
+
+        function removeFromFavorites(name, event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            let favs = getSavedLocations().filter(item => item.name !== name);
+            memorySavedLocations = favs;
+            try { localStorage.setItem('gta_saved_locations', JSON.stringify(favs)); } catch (e) {}
+            renderSavedListDropdown();
+        }
+
+        // ==================== 歷史紀錄 (Recent History) 管理 ====================
         function getRecentDestinations() {
             try {
                 const raw = localStorage.getItem('gta_recent_destinations');
@@ -868,37 +976,93 @@
             } catch (e) {}
         }
 
-        // 點擊「🕒 歷史」或「🕒 最近去過」按鈕時：免開鍵盤直接開關歷史清單
-        function toggleHistoryListBtn(e) {
-            if (e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
+        function clearRecentDestinations(e) {
+            if (e) { e.preventDefault(); e.stopPropagation(); }
+            memoryRecentFallback = [];
+            try { localStorage.removeItem('gta_recent_destinations'); } catch (err) {}
+            document.getElementById('gov-suggestions').style.display = 'none';
+        }
+
+        // ==================== 點擊「⭐ 儲存」按鈕：彈出儲存清單 ====================
+        function toggleSavedList(e) {
+            if (e) { e.preventDefault(); e.stopPropagation(); }
             const list = document.getElementById('gov-suggestions');
             const input = document.getElementById('gov-search-input');
-            input.blur(); // 收起 iOS 鍵盤，避免遮擋選單
+            input.blur();
 
-            if (list.style.display === 'block') {
+            if (list.style.display === 'block' && list.getAttribute('data-mode') === 'saved') {
+                list.style.display = 'none';
+                return;
+            }
+            renderSavedListDropdown();
+            list.setAttribute('data-mode', 'saved');
+            list.style.display = 'block';
+        }
+
+        function renderSavedListDropdown() {
+            const list = document.getElementById('gov-suggestions');
+            list.innerHTML = '';
+            const favs = getSavedLocations();
+
+            const headerLi = document.createElement('li');
+            headerLi.className = 'gov-item';
+            headerLi.style.cssText = 'background: rgba(234,179,8,0.18); border-bottom: 1px solid rgba(234,179,8,0.4); display: flex; flex-direction: row; justify-content: space-between; align-items: center; padding: 7px 14px;';
+            headerLi.innerHTML = `
+                <span style="font-size:12px;font-weight:700;color:#fde047;letter-spacing:1px;">⭐ 我的儲存地點 (${favs.length})</span>
+                <span style="font-size:11px;color:#cbd5e1;cursor:pointer;" onclick="document.getElementById('gov-suggestions').style.display='none'">關閉</span>
+            `;
+            list.appendChild(headerLi);
+
+            if (favs.length === 0) {
+                list.innerHTML += `<li class="gov-item" style="color:#94a3b8;padding:14px;">尚未有儲存地點，請在歷史清單按 [➕ 儲存] 加入。</li>`;
+                return;
+            }
+
+            favs.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'gov-item';
+                li.style.borderLeft = '4px solid #eab308';
+                li.innerHTML = `
+                    <div class="item-text-group">
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <span class="gov-title">⭐ ${item.name}</span>
+                            <span class="saved-badge">已收藏</span>
+                        </div>
+                        <span class="gov-desc">${item.address || '點擊立即導航'}</span>
+                    </div>
+                    <button class="del-fav-btn" onclick="removeFromFavorites('${item.name.replace(/'/g, "\\'")}', event)">🗑️ 移除</button>
+                `;
+                li.onclick = (e) => {
+                    e.stopPropagation();
+                    currentRoutingProfile = 'driving-traffic';
+                    document.getElementById('gov-search-input').value = item.name;
+                    list.style.display = 'none';
+                    document.getElementById('search-clear-btn').style.display = 'flex';
+                    previewDestination(item.name, item.coords);
+                };
+                list.appendChild(li);
+            });
+        }
+
+        // ==================== 點擊「🕒 最近去過」按鈕：彈出歷史紀錄 (附 ➕ 儲存 鍵) ====================
+        function toggleHistoryList(e) {
+            if (e) { e.preventDefault(); e.stopPropagation(); }
+            const list = document.getElementById('gov-suggestions');
+            const input = document.getElementById('gov-search-input');
+            input.blur();
+
+            if (list.style.display === 'block' && list.getAttribute('data-mode') === 'history') {
                 list.style.display = 'none';
                 return;
             }
 
             const recents = getRecentDestinations();
             renderSuggestions(recents, [], '', false);
+            list.setAttribute('data-mode', 'history');
             list.style.display = 'block';
         }
 
-        function clearRecentDestinations(e) {
-            if (e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-            memoryRecentFallback = [];
-            try { localStorage.removeItem('gta_recent_destinations'); } catch (err) {}
-            document.getElementById('gov-suggestions').style.display = 'none';
-        }
-
-        // 渲染下拉選單：最近導航紀錄永遠置頂頭幾位
+        // 渲染選單：包含「➕ 儲存」按鈕
         function renderSuggestions(recentsList, apiResultsList, queryText, isLoadingApi) {
             const list = document.getElementById('gov-suggestions');
             list.innerHTML = '';
@@ -911,27 +1075,39 @@
                 return;
             }
 
-            // 1. 頭排置頂：最近導航歷史紀錄
+            const currentFavs = getSavedLocations();
+
+            // 1. 最近導航歷史紀錄 (附帶 ➕ 儲存 掣)
             if (hasRecents) {
                 const headerLi = document.createElement('li');
                 headerLi.className = 'gov-item';
                 headerLi.style.cssText = 'background: rgba(176,38,255,0.16); border-bottom: 1px solid rgba(176,38,255,0.35); display: flex; flex-direction: row; justify-content: space-between; align-items: center; padding: 6px 14px;';
                 headerLi.innerHTML = `
-                    <span style="font-size:11px;font-weight:700;color:#e879f9;letter-spacing:1px;">🕒 最近導航目的地 (${recentsList.length}/10)</span>
-                    <span style="font-size:11px;color:#cbd5e1;cursor:pointer;text-decoration:underline;" onclick="clearRecentDestinations(event)">清空</span>
+                    <span style="font-size:11px;font-weight:700;color:#e879f9;letter-spacing:1px;">🕒 最近去過 (${recentsList.length}/10)</span>
+                    <span style="font-size:11px;color:#cbd5e1;cursor:pointer;text-decoration:underline;" onclick="clearRecentDestinations(event)">清空歷史</span>
                 `;
                 list.appendChild(headerLi);
 
                 recentsList.forEach(item => {
+                    const isAlreadySaved = currentFavs.some(f => f.name === item.name);
+                    const safeName = item.name.replace(/'/g, "\\'");
+                    const safeAddr = (item.address || '').replace(/'/g, "\\'");
+
                     const li = document.createElement('li');
                     li.className = 'gov-item';
                     li.style.borderLeft = '4px solid #b026ff';
                     li.innerHTML = `
-                        <div style="display:flex;justify-content:space-between;align-items:center;">
-                            <span class="gov-title">🕒 ${item.name}</span>
-                            <span class="recent-badge">最近去過</span>
+                        <div class="item-text-group">
+                            <div style="display:flex;align-items:center;gap:6px;">
+                                <span class="gov-title">🕒 ${item.name}</span>
+                                <span class="recent-badge">歷史</span>
+                            </div>
+                            <span class="gov-desc">${item.address || '點擊立即預覽出發'}</span>
                         </div>
-                        <span class="gov-desc">${item.address || '點擊立即預覽路線'}</span>
+                        <button class="add-fav-btn ${isAlreadySaved ? 'saved' : ''}" 
+                                onclick="saveToFavorites('${safeName}', [${item.coords[0]}, ${item.coords[1]}], '${safeAddr}', event)">
+                            ${isAlreadySaved ? '✅ 已儲存' : '➕ 儲存'}
+                        </button>
                     `;
                     li.onclick = (e) => {
                         e.stopPropagation();
@@ -953,16 +1129,26 @@
                     const apiHeaderLi = document.createElement('li');
                     apiHeaderLi.className = 'gov-item';
                     apiHeaderLi.style.cssText = 'background: rgba(255,255,255,0.04); border-bottom: 1px solid rgba(255,255,255,0.08); padding: 5px 14px; pointer-events: none;';
-                    apiHeaderLi.innerHTML = `<span style="font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:1px;">📍 更多香港地點結果</span>`;
+                    apiHeaderLi.innerHTML = `<span style="font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:1px;">📍 香港聯網搜尋結果</span>`;
                     list.appendChild(apiHeaderLi);
                 }
 
                 apiResultsList.forEach(item => {
+                    const isAlreadySaved = currentFavs.some(f => f.name === item.name);
+                    const safeName = item.name.replace(/'/g, "\\'");
+                    const safeAddr = (item.address || '').replace(/'/g, "\\'");
+
                     const li = document.createElement('li');
                     li.className = 'gov-item';
                     li.innerHTML = `
-                        <span class="gov-title">📍 ${item.name}</span>
-                        ${item.address ? `<span class="gov-desc">${item.address}</span>` : ''}
+                        <div class="item-text-group">
+                            <span class="gov-title">📍 ${item.name}</span>
+                            ${item.address ? `<span class="gov-desc">${item.address}</span>` : ''}
+                        </div>
+                        <button class="add-fav-btn ${isAlreadySaved ? 'saved' : ''}" 
+                                onclick="saveToFavorites('${safeName}', [${item.coords[0]}, ${item.coords[1]}], '${safeAddr}', event)">
+                            ${isAlreadySaved ? '✅ 儲存' : '➕ 儲存'}
+                        </button>
                     `;
                     li.onclick = (e) => {
                         e.stopPropagation();
@@ -997,6 +1183,7 @@
 
             if (!val) {
                 renderSuggestions(allRecents, [], '', false);
+                list.setAttribute('data-mode', 'history');
                 list.style.display = 'block';
                 return;
             }
@@ -1008,6 +1195,7 @@
             const topRecentsToShow = matchedRecents.length > 0 ? matchedRecents : allRecents.slice(0, 2);
 
             renderSuggestions(topRecentsToShow, [], val, true);
+            list.setAttribute('data-mode', 'search');
             list.style.display = 'block';
 
             searchDebounceTimer = setTimeout(async () => {
@@ -1025,6 +1213,7 @@
             const recents = getRecentDestinations();
             if (!val) {
                 renderSuggestions(recents, [], '', false);
+                list.setAttribute('data-mode', 'history');
                 list.style.display = 'block';
             } else {
                 handleSearchInput(input);
@@ -1364,7 +1553,6 @@
             `);
         }
 
-        // 最高限速
         function updateCurrentSpeedLimitUI(pos) {
             let detectedLimit = 50;
 
@@ -1615,7 +1803,7 @@
             pendingDestName = name;
             pendingDestCoord = coords;
 
-            saveRecentDestination(name, coords, '最近搜尋預覽地點');
+            saveRecentDestination(name, coords, '最近預覽地點');
 
             const routes = await fetchMultiAlternativeRoutes(currentCoord, coords);
             if (!routes || routes.length === 0) return;
@@ -2170,7 +2358,6 @@
             `;
         }
 
-        // Google Maps 車道 SVG
         function getGoogleLaneArrowSvg(directionType) {
             if (directionType === 'straight') {
                 return `
